@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { useWishlist } from '../contexts/WishlistContext';
 
 interface Product {
   id: number;
@@ -18,15 +19,25 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const [isLiked, setIsLiked] = useState(false);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
   const { dispatch } = useCart();
+  const { dispatch: wishlistDispatch, isInWishlist } = useWishlist();
+  
+  const isLiked = isInWishlist(product.id);
   
   const handleAddToCart = () => {
     dispatch({
       type: 'ADD_ITEM',
       payload: { ...product, size: selectedSize }
     });
+  };
+  
+  const handleToggleWishlist = () => {
+    if (isLiked) {
+      wishlistDispatch({ type: 'REMOVE_ITEM', payload: product.id });
+    } else {
+      wishlistDispatch({ type: 'ADD_ITEM', payload: product });
+    }
   };
   
   return (
@@ -40,7 +51,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           />
         </Link>
         <button
-          onClick={() => setIsLiked(!isLiked)}
+          onClick={handleToggleWishlist}
           className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
         >
           <Heart

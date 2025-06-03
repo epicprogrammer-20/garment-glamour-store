@@ -1,39 +1,22 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, X } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { useCart } from '../contexts/CartContext';
+import { useWishlist } from '../contexts/WishlistContext';
 
 const Wishlist = () => {
-  const [wishlistItems, setWishlistItems] = useState([
-    {
-      id: 1,
-      name: "Premium Cotton T-Shirt",
-      price: 39.99,
-      image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=600&fit=crop",
-      category: "women",
-      sizes: ["XS", "S", "M", "L", "XL"]
-    },
-    {
-      id: 3,
-      name: "Silk Evening Dress",
-      price: 199.99,
-      image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&h=600&fit=crop",
-      category: "women",
-      sizes: ["XS", "S", "M", "L"]
-    }
-  ]);
-
-  const { dispatch } = useCart();
+  const { state: wishlistState, dispatch: wishlistDispatch } = useWishlist();
+  const { dispatch: cartDispatch } = useCart();
 
   const removeFromWishlist = (id: number) => {
-    setWishlistItems(items => items.filter(item => item.id !== id));
+    wishlistDispatch({ type: 'REMOVE_ITEM', payload: id });
   };
 
   const addToCart = (item: any) => {
-    dispatch({
+    cartDispatch({
       type: 'ADD_ITEM',
       payload: { ...item, size: item.sizes[0] }
     });
@@ -49,7 +32,7 @@ const Wishlist = () => {
           <p className="text-gray-600">Keep track of items you love</p>
         </div>
 
-        {wishlistItems.length === 0 ? (
+        {wishlistState.items.length === 0 ? (
           <div className="text-center py-16">
             <Heart size={64} className="mx-auto text-gray-300 mb-4" />
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h2>
@@ -63,7 +46,7 @@ const Wishlist = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {wishlistItems.map((item) => (
+            {wishlistState.items.map((item) => (
               <div key={item.id} className="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative">
                 <button
                   onClick={() => removeFromWishlist(item.id)}

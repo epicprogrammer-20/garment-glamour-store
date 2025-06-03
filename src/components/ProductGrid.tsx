@@ -2,21 +2,36 @@
 import React, { useState } from 'react';
 import { products } from '../data/products';
 import { ProductCard } from './ProductCard';
+import { useSearch } from '../contexts/SearchContext';
 
 export const ProductGrid = () => {
   const [filter, setFilter] = useState('all');
+  const { searchQuery } = useSearch();
   
-  const filteredProducts = filter === 'all' 
+  let filteredProducts = filter === 'all' 
     ? products 
     : products.filter(product => product.category === filter);
+
+  // Apply search filter if there's a search query
+  if (searchQuery) {
+    filteredProducts = filteredProducts.filter(product =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
   
   return (
     <section id="products" className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Featured Products</h2>
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            {searchQuery ? `Search Results for "${searchQuery}"` : 'Featured Products'}
+          </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Discover our handpicked selection of premium fashion pieces, crafted with attention to detail and designed for the modern lifestyle.
+            {searchQuery 
+              ? `Found ${filteredProducts.length} products matching your search.`
+              : 'Discover our handpicked selection of premium fashion pieces, crafted with attention to detail and designed for the modern lifestyle.'
+            }
           </p>
         </div>
         
@@ -45,6 +60,13 @@ export const ProductGrid = () => {
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+
+        {filteredProducts.length === 0 && searchQuery && (
+          <div className="text-center py-16">
+            <p className="text-gray-500 text-lg">No products found for your search.</p>
+            <p className="text-gray-400 mt-2">Try searching with different keywords.</p>
+          </div>
+        )}
       </div>
     </section>
   );
