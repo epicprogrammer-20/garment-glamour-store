@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 
@@ -31,11 +32,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <div className="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
       <div className="relative overflow-hidden">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+        <Link to={`/product/${product.id}`}>
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </Link>
         <button
           onClick={() => setIsLiked(!isLiked)}
           className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
@@ -49,9 +52,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </div>
       
       <div className="p-6">
-        <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">
-          {product.name}
-        </h3>
+        <Link to={`/product/${product.id}`}>
+          <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">
+            {product.name}
+          </h3>
+        </Link>
         <p className="text-2xl font-bold text-gray-900 mb-4">${product.price}</p>
         
         {/* Size selector */}

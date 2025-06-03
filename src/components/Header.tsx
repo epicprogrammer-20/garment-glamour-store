@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { ShoppingBag, Search, User, Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShoppingBag, Search, User, Menu, Heart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 
 export const Header = () => {
@@ -12,14 +13,16 @@ export const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <h1 className="text-2xl font-bold text-gray-900">LUXE</h1>
+            <Link to="/">
+              <h1 className="text-2xl font-bold text-gray-900">LUXE</h1>
+            </Link>
           </div>
           
           {/* Navigation */}
           <nav className="hidden md:flex space-x-8">
-            <a href="#women" className="text-gray-700 hover:text-black transition-colors">Women</a>
-            <a href="#men" className="text-gray-700 hover:text-black transition-colors">Men</a>
-            <a href="#accessories" className="text-gray-700 hover:text-black transition-colors">Accessories</a>
+            <a href="/#women" className="text-gray-700 hover:text-black transition-colors">Women</a>
+            <a href="/#men" className="text-gray-700 hover:text-black transition-colors">Men</a>
+            <a href="/#accessories" className="text-gray-700 hover:text-black transition-colors">Accessories</a>
             <a href="#sale" className="text-red-600 hover:text-red-700 transition-colors">Sale</a>
           </nav>
           
@@ -31,6 +34,9 @@ export const Header = () => {
             <button className="p-2 text-gray-700 hover:text-black transition-colors">
               <User size={20} />
             </button>
+            <Link to="/wishlist" className="p-2 text-gray-700 hover:text-black transition-colors">
+              <Heart size={20} />
+            </Link>
             <button 
               onClick={() => dispatch({ type: 'TOGGLE_CART' })}
               className="p-2 text-gray-700 hover:text-black transition-colors relative"
