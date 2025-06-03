@@ -1,14 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, Heart } from 'lucide-react';
+import { ShoppingBag, Search, User, Menu, Heart, X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useSearch } from '../contexts/SearchContext';
 import { SearchDialog } from './SearchDialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerClose,
+} from './ui/drawer';
 
 export const Header = () => {
   const { state, dispatch } = useCart();
   const { setIsSearchOpen } = useSearch();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   return (
     <>
@@ -55,13 +63,63 @@ export const Header = () => {
                   </span>
                 )}
               </button>
-              <button className="md:hidden p-2 text-gray-700 hover:text-black transition-colors">
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 text-gray-700 hover:text-black transition-colors"
+              >
                 <Menu size={20} />
               </button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Mobile Menu Drawer */}
+      <Drawer open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <DrawerContent>
+          <DrawerHeader className="flex items-center justify-between">
+            <DrawerTitle>Menu</DrawerTitle>
+            <DrawerClose asChild>
+              <button className="p-2 text-gray-700 hover:text-black transition-colors">
+                <X size={20} />
+              </button>
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="px-4 pb-6">
+            <nav className="flex flex-col space-y-4">
+              <a 
+                href="/#women" 
+                className="text-lg text-gray-700 hover:text-black transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Women
+              </a>
+              <a 
+                href="/#men" 
+                className="text-lg text-gray-700 hover:text-black transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Men
+              </a>
+              <a 
+                href="/#accessories" 
+                className="text-lg text-gray-700 hover:text-black transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Accessories
+              </a>
+              <a 
+                href="#sale" 
+                className="text-lg text-red-600 hover:text-red-700 transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Sale
+              </a>
+            </nav>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
       <SearchDialog />
     </>
   );
