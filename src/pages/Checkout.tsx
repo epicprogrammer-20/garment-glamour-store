@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -10,15 +10,18 @@ import { Label } from '../components/ui/label';
 
 const Checkout = () => {
   const { state } = useCart();
+  const location = useLocation();
+  const locationData = location.state?.locationData;
+  
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
-    address: '',
-    city: '',
+    address: locationData?.location || '',
+    city: locationData?.city || '',
     state: '',
     zipCode: '',
-    country: '',
+    country: locationData?.country || '',
     paymentMethod: 'credit-card',
     cardNumber: '',
     expiryDate: '',
@@ -114,6 +117,8 @@ const Checkout = () => {
                       name="address"
                       value={formData.address}
                       onChange={handleInputChange}
+                      readOnly={!!locationData}
+                      className={locationData ? "bg-gray-100" : ""}
                       required
                     />
                   </div>
@@ -125,6 +130,8 @@ const Checkout = () => {
                         name="city"
                         value={formData.city}
                         onChange={handleInputChange}
+                        readOnly={!!locationData}
+                        className={locationData ? "bg-gray-100" : ""}
                         required
                       />
                     </div>
@@ -157,10 +164,12 @@ const Checkout = () => {
                         name="country"
                         value={formData.country}
                         onChange={handleInputChange}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ${locationData ? "bg-gray-100" : "bg-background"}`}
+                        disabled={!!locationData}
                         required
                       >
                         <option value="">Select Country</option>
+                        <option value="Zimbabwe">Zimbabwe</option>
                         <option value="US">United States</option>
                         <option value="CA">Canada</option>
                         <option value="UK">United Kingdom</option>
