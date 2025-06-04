@@ -4,7 +4,9 @@ import { Header } from '../components/Header';
 import { SecondaryNavbar } from '../components/SecondaryNavbar';
 import { Hero } from '../components/Hero';
 import { VideoSection } from '../components/VideoSection';
+import { ImageGallery } from '../components/ImageGallery';
 import { ProductGrid } from '../components/ProductGrid';
+import { SocialMedia } from '../components/SocialMedia';
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
 
@@ -15,7 +17,9 @@ const Index = () => {
       <Header />
       <Hero />
       <VideoSection />
+      <ImageGallery />
       <ProductGrid />
+      <SocialMedia />
       <Cart />
       <Footer />
     </div>
