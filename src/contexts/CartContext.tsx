@@ -12,6 +12,7 @@ interface Product {
 
 interface CartItem extends Product {
   quantity: number;
+  size: string;
 }
 
 interface CartState {
@@ -21,9 +22,9 @@ interface CartState {
 }
 
 type CartAction = 
-  | { type: 'ADD_ITEM'; payload: Product }
-  | { type: 'REMOVE_ITEM'; payload: number }
-  | { type: 'UPDATE_QUANTITY'; payload: { id: number; quantity: number } }
+  | { type: 'ADD_ITEM'; payload: Product & { size: string } }
+  | { type: 'REMOVE_ITEM'; payload: { id: number; size: string } }
+  | { type: 'UPDATE_QUANTITY'; payload: { id: number; size: string; quantity: number } }
   | { type: 'TOGGLE_CART' }
   | { type: 'CLEAR_CART' };
 
@@ -36,12 +37,12 @@ const initialState: CartState = {
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case 'ADD_ITEM': {
-      const existingItem = state.items.find(item => item.id === action.payload.id);
+      const existingItem = state.items.find(item => item.id === action.payload.id && item.size === action.payload.size);
       let newItems;
       
       if (existingItem) {
         newItems = state.items.map(item =>
-          item.id === action.payload.id
+          item.id === action.payload.id && item.size === action.payload.size
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -54,14 +55,14 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     }
     
     case 'REMOVE_ITEM': {
-      const newItems = state.items.filter(item => item.id !== action.payload);
+      const newItems = state.items.filter(item => !(item.id === action.payload.id && item.size === action.payload.size));
       const total = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       return { ...state, items: newItems, total };
     }
     
     case 'UPDATE_QUANTITY': {
       const newItems = state.items.map(item =>
-        item.id === action.payload.id
+        item.id === action.payload.id && item.size === action.payload.size
           ? { ...item, quantity: Math.max(0, action.payload.quantity) }
           : item
       ).filter(item => item.quantity > 0);
