@@ -23,7 +23,7 @@ interface CartState {
 
 type CartAction = 
   | { type: 'ADD_ITEM'; payload: Product & { size: string } }
-  | { type: 'REMOVE_ITEM'; payload: { id: number; size: string } }
+  | { type: 'REMOVE_FROM_CART'; payload: { id: number; size: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { id: number; size: string; quantity: number } }
   | { type: 'TOGGLE_CART' }
   | { type: 'CLEAR_CART' };
@@ -54,7 +54,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       return { ...state, items: newItems, total };
     }
     
-    case 'REMOVE_ITEM': {
+    case 'REMOVE_FROM_CART': {
       const newItems = state.items.filter(item => !(item.id === action.payload.id && item.size === action.payload.size));
       const total = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       return { ...state, items: newItems, total };
