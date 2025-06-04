@@ -12,6 +12,10 @@ import ProductDetail from "./pages/ProductDetail";
 import Wishlist from "./pages/Wishlist";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Women from "./pages/Women";
+import Men from "./pages/Men";
+import Accessories from "./pages/Accessories";
+import Checkout from "./pages/Checkout";
 
 const queryClient = new QueryClient();
 
@@ -26,8 +30,12 @@ const App = () => (
               <Sonner />
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/women" element={<Women />} />
+                <Route path="/men" element={<Men />} />
+                <Route path="/accessories" element={<Accessories />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/checkout" element={<Checkout />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

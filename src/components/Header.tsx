@@ -32,9 +32,9 @@ export const Header = () => {
             
             {/* Navigation */}
             <nav className="hidden md:flex space-x-8">
-              <a href="/#women" className="text-gray-700 hover:text-black transition-colors">Women</a>
-              <a href="/#men" className="text-gray-700 hover:text-black transition-colors">Men</a>
-              <a href="/#accessories" className="text-gray-700 hover:text-black transition-colors">Accessories</a>
+              <Link to="/women" className="text-gray-700 hover:text-black transition-colors">Women</Link>
+              <Link to="/men" className="text-gray-700 hover:text-black transition-colors">Men</Link>
+              <Link to="/accessories" className="text-gray-700 hover:text-black transition-colors">Accessories</Link>
               <a href="#sale" className="text-red-600 hover:text-red-700 transition-colors">Sale</a>
             </nav>
             
@@ -87,27 +87,27 @@ export const Header = () => {
           </DrawerHeader>
           <div className="px-4 pb-6">
             <nav className="flex flex-col space-y-4">
-              <a 
-                href="/#women" 
+              <Link 
+                to="/women" 
                 className="text-lg text-gray-700 hover:text-black transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Women
-              </a>
-              <a 
-                href="/#men" 
+              </Link>
+              <Link 
+                to="/men" 
                 className="text-lg text-gray-700 hover:text-black transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Men
-              </a>
-              <a 
-                href="/#accessories" 
+              </Link>
+              <Link 
+                to="/accessories" 
                 className="text-lg text-gray-700 hover:text-black transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Accessories
-              </a>
+              </Link>
               <a 
                 href="#sale" 
                 className="text-lg text-red-600 hover:text-red-700 transition-colors py-2"

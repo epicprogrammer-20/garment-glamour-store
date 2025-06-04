@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, X } from 'lucide-react';
 import { Header } from '../components/Header';
+import { SecondaryNavbar } from '../components/SecondaryNavbar';
 import { Footer } from '../components/Footer';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
@@ -24,12 +25,20 @@ const Wishlist = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SecondaryNavbar />
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Your Wishlist</h1>
-          <p className="text-gray-600">Keep track of items you love</p>
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <Heart size={32} className="text-red-500 fill-current" />
+            <h1 className="text-4xl font-bold text-gray-900">Your Wishlist</h1>
+          </div>
+          <p className="text-gray-600 mb-2">Keep track of items you love</p>
+          <div className="inline-flex items-center px-4 py-2 bg-red-50 text-red-700 rounded-full">
+            <Heart size={16} className="mr-2 fill-current" />
+            <span className="font-semibold">{wishlistState.items.length} items liked</span>
+          </div>
         </div>
 
         {wishlistState.items.length === 0 ? (

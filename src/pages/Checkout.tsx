@@ -1,0 +1,302 @@
+
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone } from 'lucide-react';
+import { Header } from '../components/Header';
+import { Footer } from '../components/Footer';
+import { useCart } from '../contexts/CartContext';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+
+const Checkout = () => {
+  const { state } = useCart();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: '',
+    paymentMethod: 'credit-card',
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    cardName: ''
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle checkout logic here
+    console.log('Checkout submitted:', formData);
+    alert('Order placed successfully!');
+  };
+
+  const total = state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Link to="/" className="flex items-center text-gray-600 hover:text-black mb-8">
+          <ArrowLeft size={20} className="mr-2" />
+          Back to Shopping
+        </Link>
+
+        <div className="grid lg:grid-cols-2 gap-12">
+          {/* Checkout Form */}
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <h1 className="text-2xl font-bold mb-8">Checkout</h1>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Personal Information */}
+              <div>
+                <h2 className="text-lg font-semibold mb-4 flex items-center">
+                  <User className="mr-2" size={20} />
+                  Personal Information
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              <div>
+                <h2 className="text-lg font-semibold mb-4 flex items-center">
+                  <MapPin className="mr-2" size={20} />
+                  Shipping Address
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="address">Street Address</Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        id="city"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="state">State/Province</Label>
+                      <Input
+                        id="state"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="zipCode">ZIP/Postal Code</Label>
+                      <Input
+                        id="zipCode"
+                        name="zipCode"
+                        value={formData.zipCode}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="country">Country</Label>
+                      <select
+                        id="country"
+                        name="country"
+                        value={formData.country}
+                        onChange={handleInputChange}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        required
+                      >
+                        <option value="">Select Country</option>
+                        <option value="US">United States</option>
+                        <option value="CA">Canada</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="AU">Australia</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Method */}
+              <div>
+                <h2 className="text-lg font-semibold mb-4 flex items-center">
+                  <CreditCard className="mr-2" size={20} />
+                  Payment Method
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="paymentMethod">Payment Method</Label>
+                    <select
+                      id="paymentMethod"
+                      name="paymentMethod"
+                      value={formData.paymentMethod}
+                      onChange={handleInputChange}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="credit-card">Credit Card</option>
+                      <option value="debit-card">Debit Card</option>
+                      <option value="paypal">PayPal</option>
+                    </select>
+                  </div>
+                  
+                  {(formData.paymentMethod === 'credit-card' || formData.paymentMethod === 'debit-card') && (
+                    <>
+                      <div>
+                        <Label htmlFor="cardName">Name on Card</Label>
+                        <Input
+                          id="cardName"
+                          name="cardName"
+                          value={formData.cardName}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cardNumber">Card Number</Label>
+                        <Input
+                          id="cardNumber"
+                          name="cardNumber"
+                          placeholder="1234 5678 9012 3456"
+                          value={formData.cardNumber}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="expiryDate">Expiry Date</Label>
+                          <Input
+                            id="expiryDate"
+                            name="expiryDate"
+                            placeholder="MM/YY"
+                            value={formData.expiryDate}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="cvv">CVV</Label>
+                          <Input
+                            id="cvv"
+                            name="cvv"
+                            placeholder="123"
+                            value={formData.cvv}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-black text-white py-4 rounded-lg hover:bg-gray-800 transition-colors font-semibold"
+              >
+                Complete Order - ${total.toFixed(2)}
+              </button>
+            </form>
+          </div>
+
+          {/* Order Summary */}
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <h2 className="text-xl font-bold mb-6">Order Summary</h2>
+            
+            <div className="space-y-4 mb-6">
+              {state.items.map((item) => (
+                <div key={`${item.id}-${item.size}`} className="flex items-center space-x-4">
+                  <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
+                  <div className="flex-1">
+                    <h3 className="font-medium">{item.name}</h3>
+                    <p className="text-sm text-gray-600">Size: {item.size}</p>
+                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                  </div>
+                  <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t pt-4 space-y-2">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>${total.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Shipping</span>
+                <span>$10.00</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tax</span>
+                <span>${(total * 0.08).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-lg border-t pt-2">
+                <span>Total</span>
+                <span>${(total + 10 + (total * 0.08)).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default Checkout;
