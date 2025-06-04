@@ -16,6 +16,11 @@ import Women from "./pages/Women";
 import Men from "./pages/Men";
 import Accessories from "./pages/Accessories";
 import Checkout from "./pages/Checkout";
+import CustomerService from "./pages/CustomerService";
+import Contact from "./pages/Contact";
+import Shipping from "./pages/Shipping";
+import Help from "./pages/Help";
+import DeliveryRestriction from "./pages/DeliveryRestriction";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +42,11 @@ const App = () => (
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/customer-service" element={<CustomerService />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/shipping" element={<Shipping />} />
+                <Route path="/help" element={<Help />} />
+                <Route path="/delivery-restriction" element={<DeliveryRestriction />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </SearchProvider>

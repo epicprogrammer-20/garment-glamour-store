@@ -16,12 +16,6 @@ export const SecondaryNavbar = () => {
             <span>Customer Service</span>
           </Link>
           <Link 
-            to="/about" 
-            className="text-gray-600 hover:text-black transition-colors"
-          >
-            About
-          </Link>
-          <Link 
             to="/contact" 
             className="flex items-center space-x-1 text-gray-600 hover:text-black transition-colors"
           >
