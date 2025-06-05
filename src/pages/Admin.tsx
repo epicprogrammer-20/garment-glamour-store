@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lock, Plus, Edit, Trash2 } from 'lucide-react';
+import { Lock, Plus, Trash2, Upload } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const Admin = () => {
   const { isAdminAuthenticated, adminLogin, adminLogout } = useAdminAuth();
@@ -22,6 +23,7 @@ const Admin = () => {
   const [newVideo, setNewVideo] = useState({
     title: '', url: '', description: ''
   });
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -40,17 +42,96 @@ const Admin = () => {
     setVideos(data || []);
   };
 
+  const uploadFile = async (file: File, bucket: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file);
+
+    if (error) {
+      throw error;
+    }
+
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const imageUrl = await uploadFile(file, 'products');
+      setNewProduct({ ...newProduct, image: imageUrl });
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const videoUrl = await uploadFile(file, 'videos');
+      setNewVideo({ ...newVideo, url: videoUrl });
+      toast({
+        title: "Success",
+        description: "Video uploaded successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload video",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await adminLogin(loginForm.username, loginForm.password);
     if (!result.success) {
-      alert(result.error);
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
     }
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const sizesArray = newProduct.sizes.split(',').map(s => s.trim());
+    if (!newProduct.name || !newProduct.price || !newProduct.image) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const sizesArray = newProduct.sizes.split(',').map(s => s.trim()).filter(s => s.length > 0);
     
     const { error } = await supabase.from('products').insert({
       name: newProduct.name,
@@ -64,32 +145,71 @@ const Admin = () => {
     if (!error) {
       setNewProduct({ name: '', price: '', image: '', category: 'women', sizes: '', description: '' });
       fetchProducts();
-      alert('Product added successfully!');
+      toast({
+        title: "Success",
+        description: "Product added successfully!",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to add product",
+        variant: "destructive",
+      });
     }
   };
 
   const handleAddVideo = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newVideo.title || !newVideo.url) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase.from('videos').insert(newVideo);
 
     if (!error) {
       setNewVideo({ title: '', url: '', description: '' });
       fetchVideos();
-      alert('Video added successfully!');
+      toast({
+        title: "Success",
+        description: "Video added successfully!",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to add video",
+        variant: "destructive",
+      });
     }
   };
 
   const handleDeleteProduct = async (id: number) => {
     if (confirm('Are you sure you want to delete this product?')) {
-      await supabase.from('products').delete().eq('id', id);
-      fetchProducts();
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (!error) {
+        fetchProducts();
+        toast({
+          title: "Success",
+          description: "Product deleted successfully!",
+        });
+      }
     }
   };
 
   const handleDeleteVideo = async (id: string) => {
     if (confirm('Are you sure you want to delete this video?')) {
-      await supabase.from('videos').delete().eq('id', id);
-      fetchVideos();
+      const { error } = await supabase.from('videos').delete().eq('id', id);
+      if (!error) {
+        fetchVideos();
+        toast({
+          title: "Success",
+          description: "Video deleted successfully!",
+        });
+      }
     }
   };
 
@@ -180,14 +300,34 @@ const Admin = () => {
                       required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="image">Image URL</Label>
-                    <Input
-                      id="image"
-                      value={newProduct.image}
-                      onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
-                      required
-                    />
+                  <div className="col-span-2">
+                    <Label htmlFor="image">Product Image</Label>
+                    <div className="space-y-2">
+                      <Input
+                        id="image"
+                        placeholder="Image URL or upload file below"
+                        value={newProduct.image}
+                        onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                      />
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          id="image-upload"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('image-upload')?.click()}
+                          disabled={uploading}
+                        >
+                          <Upload size={16} className="mr-2" />
+                          {uploading ? 'Uploading...' : 'Upload Image'}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="category">Category</Label>
@@ -212,7 +352,7 @@ const Admin = () => {
                       required
                     />
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <Label htmlFor="description">Description</Label>
                     <Input
                       id="description"
@@ -277,12 +417,32 @@ const Admin = () => {
                   </div>
                   <div>
                     <Label htmlFor="url">Video URL</Label>
-                    <Input
-                      id="url"
-                      value={newVideo.url}
-                      onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
-                      required
-                    />
+                    <div className="space-y-2">
+                      <Input
+                        id="url"
+                        placeholder="Video URL or upload file below"
+                        value={newVideo.url}
+                        onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
+                      />
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="file"
+                          accept="video/*"
+                          onChange={handleVideoUpload}
+                          className="hidden"
+                          id="video-upload"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('video-upload')?.click()}
+                          disabled={uploading}
+                        >
+                          <Upload size={16} className="mr-2" />
+                          {uploading ? 'Uploading...' : 'Upload Video'}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="description">Description</Label>

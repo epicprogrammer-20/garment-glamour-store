@@ -1,10 +1,12 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, Heart, X, Globe, Crown } from 'lucide-react';
+import { ShoppingBag, Search, User, Menu, Heart, X, Globe, Crown, Settings } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useSearch } from '../contexts/SearchContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useUserData } from '../hooks/useUserData';
 import { SearchDialog } from './SearchDialog';
 import {
   Drawer,
@@ -18,8 +20,11 @@ export const Header = () => {
   const { state, dispatch } = useCart();
   const { state: wishlistState } = useWishlist();
   const { setIsSearchOpen } = useSearch();
+  const { user } = useAuth();
+  const { profile } = useUserData();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('EN');
+  const [showAdminHint, setShowAdminHint] = useState(false);
   const location = useLocation();
   
   const isActive = (path: string) => location.pathname === path;
@@ -31,12 +36,17 @@ export const Header = () => {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex-shrink-0">
+            {/* Logo and User Greeting */}
+            <div className="flex items-center space-x-4">
               <Link to="/" className="flex flex-col items-center">
                 <Crown size={24} className="text-purple-600 mb-1" />
                 <h1 className="text-xl font-bold text-gray-900">LUXE</h1>
               </Link>
+              {user && profile && (
+                <div className="hidden md:block">
+                  <span className="text-sm text-gray-600">Hello, {profile.name}!</span>
+                </div>
+              )}
             </div>
             
             {/* Navigation */}
@@ -94,6 +104,23 @@ export const Header = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Admin Access (Hidden) */}
+              <div className="relative">
+                <button 
+                  onClick={() => setShowAdminHint(!showAdminHint)}
+                  onDoubleClick={() => window.location.href = '/admin'}
+                  className="p-2 text-gray-700 hover:text-black transition-colors"
+                  title="Settings"
+                >
+                  <Settings size={16} />
+                </button>
+                {showAdminHint && (
+                  <div className="absolute right-0 top-full mt-1 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                    Double-click for admin
+                  </div>
+                )}
+              </div>
               
               <button 
                 onClick={() => setIsSearchOpen(true)}
@@ -131,6 +158,13 @@ export const Header = () => {
               </button>
             </div>
           </div>
+          
+          {/* Mobile User Greeting */}
+          {user && profile && (
+            <div className="md:hidden pb-2">
+              <span className="text-sm text-gray-600">Hello, {profile.name}!</span>
+            </div>
+          )}
         </div>
       </header>
 
