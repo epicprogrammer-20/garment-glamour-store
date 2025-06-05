@@ -2,10 +2,15 @@
 import React, { useState } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-import { User, Mail, Lock, Edit, Heart, ShoppingBag } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useUserData } from '../hooks/useUserData';
+import { useWishlist } from '../contexts/WishlistContext';
+import { User, Mail, Lock, Edit, Heart, ShoppingBag, Star } from 'lucide-react';
 
 const Profile = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, signIn, signUp, signOut } = useAuth();
+  const { profile, orderCount, reviewCount, loading } = useUserData();
+  const { state: wishlistState } = useWishlist();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -13,11 +18,33 @@ const Profile = () => {
     name: '',
     confirmPassword: ''
   });
+  const [authError, setAuthError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login/signup
-    setIsLoggedIn(true);
+    setAuthError('');
+
+    try {
+      if (isLogin) {
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) {
+          setAuthError(error.message);
+        }
+      } else {
+        if (formData.password !== formData.confirmPassword) {
+          setAuthError('Passwords do not match');
+          return;
+        }
+        const { error } = await signUp(formData.email, formData.password, formData.name);
+        if (error) {
+          setAuthError(error.message);
+        } else {
+          setAuthError('Check your email for the confirmation link');
+        }
+      }
+    } catch (error) {
+      setAuthError('An unexpected error occurred');
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,7 +54,7 @@ const Profile = () => {
     });
   };
 
-  if (isLoggedIn) {
+  if (user && profile) {
     return (
       <div className="min-h-screen bg-white">
         <Header />
@@ -39,8 +66,8 @@ const Profile = () => {
                 <User size={32} className="text-gray-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">John Doe</h1>
-                <p className="text-gray-600">john.doe@example.com</p>
+                <h1 className="text-2xl font-bold text-gray-900">{profile.name}</h1>
+                <p className="text-gray-600">{profile.email}</p>
               </div>
               <button className="ml-auto p-2 text-gray-600 hover:text-black">
                 <Edit size={20} />
@@ -51,17 +78,17 @@ const Profile = () => {
               <div className="bg-gray-50 p-6 rounded-lg text-center">
                 <ShoppingBag size={24} className="mx-auto mb-2 text-gray-600" />
                 <h3 className="font-semibold text-gray-900">Orders</h3>
-                <p className="text-2xl font-bold text-gray-900">12</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : orderCount}</p>
               </div>
               <div className="bg-gray-50 p-6 rounded-lg text-center">
                 <Heart size={24} className="mx-auto mb-2 text-gray-600" />
                 <h3 className="font-semibold text-gray-900">Wishlist</h3>
-                <p className="text-2xl font-bold text-gray-900">8</p>
+                <p className="text-2xl font-bold text-gray-900">{wishlistState.items.length}</p>
               </div>
               <div className="bg-gray-50 p-6 rounded-lg text-center">
-                <User size={24} className="mx-auto mb-2 text-gray-600" />
+                <Star size={24} className="mx-auto mb-2 text-gray-600" />
                 <h3 className="font-semibold text-gray-900">Reviews</h3>
-                <p className="text-2xl font-bold text-gray-900">5</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : reviewCount}</p>
               </div>
             </div>
 
@@ -73,8 +100,8 @@ const Profile = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                     <input
                       type="text"
-                      value="John Doe"
-                      className="w-full p-3 border border-gray-300 rounded-lg"
+                      value={profile.name}
+                      className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
                       readOnly
                     />
                   </div>
@@ -82,8 +109,8 @@ const Profile = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input
                       type="email"
-                      value="john.doe@example.com"
-                      className="w-full p-3 border border-gray-300 rounded-lg"
+                      value={profile.email}
+                      className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
                       readOnly
                     />
                   </div>
@@ -92,7 +119,7 @@ const Profile = () => {
 
               <div className="flex space-x-4">
                 <button
-                  onClick={() => setIsLoggedIn(false)}
+                  onClick={signOut}
                   className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Logout
@@ -124,6 +151,12 @@ const Profile = () => {
               {isLogin ? 'Sign in to your account' : 'Sign up for a new account'}
             </p>
           </div>
+
+          {authError && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {authError}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (

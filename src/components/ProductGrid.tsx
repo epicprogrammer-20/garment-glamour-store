@@ -1,12 +1,33 @@
 
-import React, { useState } from 'react';
-import { products } from '../data/products';
+import React, { useState, useEffect } from 'react';
 import { ProductCard } from './ProductCard';
 import { useSearch } from '../contexts/SearchContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export const ProductGrid = () => {
   const [filter, setFilter] = useState('all');
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { searchQuery } = useSearch();
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   let filteredProducts = filter === 'all' 
     ? products 
@@ -17,6 +38,18 @@ export const ProductGrid = () => {
     filteredProducts = filteredProducts.filter(product =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+
+  if (loading) {
+    return (
+      <section id="products" className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p>Loading products...</p>
+          </div>
+        </div>
+      </section>
     );
   }
   
