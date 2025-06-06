@@ -107,7 +107,7 @@ const Profile = () => {
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Phone</h1>
               <p className="text-gray-600">
-                We've sent a 6-digit code to +263716601651
+                We've sent a 6-digit code to {formData.phone}
               </p>
             </div>
 
@@ -309,10 +309,13 @@ const Profile = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    placeholder="+263716601651"
+                    placeholder="+1234567890 (include country code)"
                     required
                   />
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Include country code (e.g., +1 for US, +44 for UK, +263 for Zimbabwe)
+                </p>
               </div>
             )}
 

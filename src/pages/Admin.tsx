@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -105,32 +104,18 @@ const Admin = () => {
 
   const uploadFile = async (file: File, bucket: string) => {
     try {
-      // Check if bucket exists, if not create it
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(b => b.name === bucket);
-      
-      if (!bucketExists) {
-        const { error: bucketError } = await supabase.storage.createBucket(bucket, {
-          public: true,
-          allowedMimeTypes: bucket === 'products' ? ['image/*'] : ['video/*'],
-          fileSizeLimit: bucket === 'products' ? 5242880 : 52428800 // 5MB for images, 50MB for videos
-        });
-        
-        if (bucketError) {
-          console.error('Error creating bucket:', bucketError);
-          throw bucketError;
-        }
-      }
+      setUploading(true);
+      console.log('Starting upload for:', { bucket, fileName: file.name, fileSize: file.size });
 
+      // Create a unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = fileName;
 
-      console.log('Uploading file:', { bucket, filePath, fileSize: file.size, fileType: file.type });
+      console.log('Uploading to bucket:', bucket, 'with filename:', fileName);
 
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file, {
+        .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false
         });
@@ -144,13 +129,15 @@ const Admin = () => {
 
       const { data: urlData } = supabase.storage
         .from(bucket)
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
-      console.log('Public URL:', urlData.publicUrl);
+      console.log('Public URL generated:', urlData.publicUrl);
       return urlData.publicUrl;
     } catch (error) {
       console.error('Upload file error:', error);
       throw error;
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -158,7 +145,6 @@ const Admin = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Error",
@@ -168,7 +154,6 @@ const Admin = () => {
       return;
     }
 
-    // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "Error",
@@ -179,9 +164,8 @@ const Admin = () => {
     }
 
     try {
-      setUploading(true);
       console.log('Starting image upload...');
-      const imageUrl = await uploadFile(file, 'products');
+      const imageUrl = await uploadFile(file, 'product-images');
       setNewProduct({ ...newProduct, image: imageUrl });
       toast({
         title: "Success",
@@ -194,8 +178,6 @@ const Admin = () => {
         description: `Failed to upload image: ${error.message}`,
         variant: "destructive",
       });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -203,7 +185,6 @@ const Admin = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('video/')) {
       toast({
         title: "Error",
@@ -213,7 +194,6 @@ const Admin = () => {
       return;
     }
 
-    // Validate file size (50MB limit)
     if (file.size > 50 * 1024 * 1024) {
       toast({
         title: "Error",
@@ -224,7 +204,6 @@ const Admin = () => {
     }
 
     try {
-      setUploading(true);
       console.log('Starting video upload...');
       const videoUrl = await uploadFile(file, 'videos');
       setNewVideo({ ...newVideo, url: videoUrl });
@@ -239,8 +218,6 @@ const Admin = () => {
         description: `Failed to upload video: ${error.message}`,
         variant: "destructive",
       });
-    } finally {
-      setUploading(false);
     }
   };
 
