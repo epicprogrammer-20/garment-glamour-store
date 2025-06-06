@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lock, Plus, Trash2, Upload } from 'lucide-react';
+import { Lock, Plus, Trash2, Upload, Tag } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const Admin = () => {
@@ -17,11 +16,15 @@ const Admin = () => {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [products, setProducts] = useState<any[]>([]);
   const [videos, setVideos] = useState<any[]>([]);
+  const [saleProducts, setSaleProducts] = useState<any[]>([]);
   const [newProduct, setNewProduct] = useState({
     name: '', price: '', image: '', category: 'women', sizes: '', description: ''
   });
   const [newVideo, setNewVideo] = useState({
     title: '', url: '', description: ''
+  });
+  const [newSaleProduct, setNewSaleProduct] = useState({
+    product_id: '', original_price: '', sale_price: '', discount_percentage: ''
   });
   const [uploading, setUploading] = useState(false);
 
@@ -29,6 +32,7 @@ const Admin = () => {
     if (isAdminAuthenticated) {
       fetchProducts();
       fetchVideos();
+      fetchSaleProducts();
     }
   }, [isAdminAuthenticated]);
 
@@ -42,24 +46,54 @@ const Admin = () => {
     setVideos(data || []);
   };
 
+  const fetchSaleProducts = async () => {
+    const { data } = await supabase
+      .from('sale_products')
+      .select(`
+        *,
+        products (
+          id,
+          name,
+          image,
+          category
+        )
+      `)
+      .order('created_at', { ascending: false });
+    setSaleProducts(data || []);
+  };
+
   const uploadFile = async (file: File, bucket: string) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+      const filePath = fileName;
 
-    const { error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file);
+      console.log('Uploading file:', { bucket, filePath, fileSize: file.size });
 
-    if (error) {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
+
+      console.log('Upload successful:', data);
+
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(filePath);
+
+      console.log('Public URL:', urlData.publicUrl);
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Upload file error:', error);
       throw error;
     }
-
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,17 +102,18 @@ const Admin = () => {
 
     try {
       setUploading(true);
+      console.log('Starting image upload...');
       const imageUrl = await uploadFile(file, 'products');
       setNewProduct({ ...newProduct, image: imageUrl });
       toast({
         title: "Success",
         description: "Image uploaded successfully!",
       });
-    } catch (error) {
-      console.error('Upload error:', error);
+    } catch (error: any) {
+      console.error('Image upload error:', error);
       toast({
         title: "Error",
-        description: "Failed to upload image",
+        description: `Failed to upload image: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -92,17 +127,18 @@ const Admin = () => {
 
     try {
       setUploading(true);
+      console.log('Starting video upload...');
       const videoUrl = await uploadFile(file, 'videos');
       setNewVideo({ ...newVideo, url: videoUrl });
       toast({
         title: "Success",
         description: "Video uploaded successfully!",
       });
-    } catch (error) {
-      console.error('Upload error:', error);
+    } catch (error: any) {
+      console.error('Video upload error:', error);
       toast({
         title: "Error",
-        description: "Failed to upload video",
+        description: `Failed to upload video: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -145,19 +181,22 @@ const Admin = () => {
         description: newProduct.description
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Product insert error:', error);
+        throw error;
+      }
 
       setNewProduct({ name: '', price: '', image: '', category: 'women', sizes: '', description: '' });
       fetchProducts();
       toast({
         title: "Success",
-        description: "Product uploaded successfully!",
+        description: "Product added successfully!",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Product add error:', error);
       toast({
         title: "Error",
-        description: "Product upload failed",
+        description: `Failed to add product: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -177,19 +216,66 @@ const Admin = () => {
     try {
       const { error } = await supabase.from('videos').insert(newVideo);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Video insert error:', error);
+        throw error;
+      }
 
       setNewVideo({ title: '', url: '', description: '' });
       fetchVideos();
       toast({
         title: "Success",
-        description: "Video uploaded successfully!",
+        description: "Video added successfully!",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Video add error:', error);
       toast({
         title: "Error",
-        description: "Video upload failed",
+        description: `Failed to add video: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddSaleProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSaleProduct.product_id || !newSaleProduct.original_price || !newSaleProduct.sale_price) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const discountPercentage = newSaleProduct.discount_percentage || 
+        Math.round((1 - parseFloat(newSaleProduct.sale_price) / parseFloat(newSaleProduct.original_price)) * 100);
+
+      const { error } = await supabase.from('sale_products').insert({
+        product_id: parseInt(newSaleProduct.product_id),
+        original_price: parseFloat(newSaleProduct.original_price),
+        sale_price: parseFloat(newSaleProduct.sale_price),
+        discount_percentage: discountPercentage,
+        is_active: true
+      });
+
+      if (error) {
+        console.error('Sale product insert error:', error);
+        throw error;
+      }
+
+      setNewSaleProduct({ product_id: '', original_price: '', sale_price: '', discount_percentage: '' });
+      fetchSaleProducts();
+      toast({
+        title: "Success",
+        description: "Sale product added successfully!",
+      });
+    } catch (error: any) {
+      console.error('Sale product add error:', error);
+      toast({
+        title: "Error",
+        description: `Failed to add sale product: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -216,6 +302,19 @@ const Admin = () => {
         toast({
           title: "Success",
           description: "Video deleted successfully!",
+        });
+      }
+    }
+  };
+
+  const handleDeleteSaleProduct = async (id: string) => {
+    if (confirm('Are you sure you want to remove this product from sale?')) {
+      const { error } = await supabase.from('sale_products').delete().eq('id', id);
+      if (!error) {
+        fetchSaleProducts();
+        toast({
+          title: "Success",
+          description: "Sale product removed successfully!",
         });
       }
     }
@@ -279,6 +378,7 @@ const Admin = () => {
           <TabsList>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="videos">Videos</TabsTrigger>
+            <TabsTrigger value="sale">Sale Products</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products" className="space-y-6">
@@ -483,6 +583,116 @@ const Admin = () => {
                       </div>
                       <Button
                         onClick={() => handleDeleteVideo(video.id)}
+                        variant="destructive"
+                        size="sm"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="sale" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag size={20} />
+                  Add Product to Sale
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddSaleProduct} className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="product_id">Select Product</Label>
+                    <select
+                      id="product_id"
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      value={newSaleProduct.product_id}
+                      onChange={(e) => setNewSaleProduct({ ...newSaleProduct, product_id: e.target.value })}
+                      required
+                    >
+                      <option value="">Select a product</option>
+                      {products.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name} - ${product.price}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="original_price">Original Price</Label>
+                    <Input
+                      id="original_price"
+                      type="number"
+                      step="0.01"
+                      value={newSaleProduct.original_price}
+                      onChange={(e) => setNewSaleProduct({ ...newSaleProduct, original_price: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sale_price">Sale Price</Label>
+                    <Input
+                      id="sale_price"
+                      type="number"
+                      step="0.01"
+                      value={newSaleProduct.sale_price}
+                      onChange={(e) => setNewSaleProduct({ ...newSaleProduct, sale_price: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="discount_percentage">Discount % (auto-calculated)</Label>
+                    <Input
+                      id="discount_percentage"
+                      type="number"
+                      value={newSaleProduct.discount_percentage}
+                      onChange={(e) => setNewSaleProduct({ ...newSaleProduct, discount_percentage: e.target.value })}
+                      placeholder="Auto-calculated"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Button type="submit" className="w-full">
+                      <Tag size={16} className="mr-2" />
+                      Add to Sale
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Products on Sale</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  {saleProducts.map((saleProduct) => (
+                    <div key={saleProduct.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        {saleProduct.products && (
+                          <img 
+                            src={saleProduct.products.image} 
+                            alt={saleProduct.products.name} 
+                            className="w-16 h-16 object-cover rounded" 
+                          />
+                        )}
+                        <div>
+                          <h3 className="font-semibold">{saleProduct.products?.name}</h3>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-500 line-through">${saleProduct.original_price}</span>
+                            <span className="text-red-600 font-bold">${saleProduct.sale_price}</span>
+                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">
+                              {saleProduct.discount_percentage}% OFF
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleDeleteSaleProduct(saleProduct.id)}
                         variant="destructive"
                         size="sm"
                       >

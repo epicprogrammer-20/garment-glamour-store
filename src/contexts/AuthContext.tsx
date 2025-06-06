@@ -7,7 +7,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string, phone: string) => Promise<{ error: any; needsVerification?: boolean }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -40,17 +41,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name },
-        // Remove email confirmation for easier signup
-        emailRedirectTo: undefined
+  const signUp = async (email: string, password: string, name: string, phone: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        phone,
+        options: {
+          data: { 
+            name,
+            phone 
+          },
+          channel: 'sms'
+        }
+      });
+
+      if (error) {
+        return { error };
       }
-    });
-    return { error };
+
+      // If user is not confirmed, they need OTP verification
+      if (data.user && !data.user.email_confirmed_at) {
+        return { error: null, needsVerification: true };
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
+  const verifyOtp = async (phone: string, token: string) => {
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone,
+        token,
+        type: 'sms'
+      });
+      return { error };
+    } catch (error) {
+      return { error };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
@@ -67,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, verifyOtp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
