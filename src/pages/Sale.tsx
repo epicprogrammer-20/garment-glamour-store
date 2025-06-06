@@ -16,20 +16,36 @@ const Sale = () => {
 
   const fetchSaleProducts = async () => {
     try {
-      // For demo purposes, we'll show all products as "on sale"
-      const { data } = await supabase
-        .from('products')
-        .select('*')
+      const { data, error } = await supabase
+        .from('sale_products')
+        .select(`
+          *,
+          products (
+            id,
+            name,
+            image,
+            category,
+            description,
+            sizes
+          )
+        `)
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
       
-      // Add sale prices (50% off)
-      const productsWithSale = (data || []).map(product => ({
-        ...product,
-        originalPrice: product.price,
-        price: Math.round(product.price * 0.5 * 100) / 100 // 50% off, rounded to 2 decimals
+      if (error) {
+        console.error('Error fetching sale products:', error);
+        throw error;
+      }
+
+      // Transform the data to match ProductCard expectations
+      const transformedProducts = (data || []).map(saleProduct => ({
+        ...saleProduct.products,
+        originalPrice: saleProduct.original_price,
+        price: saleProduct.sale_price,
+        discountPercentage: saleProduct.discount_percentage
       }));
       
-      setSaleProducts(productsWithSale);
+      setSaleProducts(transformedProducts);
     } catch (error) {
       console.error('Error fetching sale products:', error);
     } finally {
@@ -78,7 +94,7 @@ const Sale = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <div className="bg-gradient-to-br from-purple-600 to-purple-800 text-white p-8 rounded-xl text-center transform hover:scale-105 transition-transform">
-              <h3 className="text-2xl font-bold mb-2">50% OFF</h3>
+              <h3 className="text-2xl font-bold mb-2">UP TO 50% OFF</h3>
               <p className="text-lg">All Designer Pieces</p>
               <button className="bg-white text-purple-600 px-6 py-2 rounded-full font-semibold mt-4 hover:bg-gray-100 transition-colors">
                 SHOP NOW
@@ -117,7 +133,7 @@ const Sale = () => {
             </div>
             <div className="hidden md:block h-12 w-px bg-gray-600"></div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-red-400">50% OFF</p>
+              <p className="text-3xl font-bold text-red-400">UP TO 50% OFF</p>
               <p className="text-sm">Everything Must Go!</p>
             </div>
             <div className="hidden md:block h-12 w-px bg-gray-600"></div>
@@ -146,7 +162,7 @@ const Sale = () => {
                 <div key={product.id} className="relative">
                   {/* Sale Badge */}
                   <div className="absolute top-4 left-4 z-10 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                    50% OFF
+                    {product.discountPercentage}% OFF
                   </div>
                   {/* Original Price Display */}
                   <div className="absolute top-4 right-4 z-10 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">

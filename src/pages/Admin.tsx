@@ -37,38 +37,95 @@ const Admin = () => {
   }, [isAdminAuthenticated]);
 
   const fetchProducts = async () => {
-    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    setProducts(data || []);
+    try {
+      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error('Error fetching products:', error);
+        throw error;
+      }
+      setProducts(data || []);
+    } catch (error: any) {
+      console.error('Fetch products error:', error);
+      toast({
+        title: "Error",
+        description: `Failed to fetch products: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const fetchVideos = async () => {
-    const { data } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
-    setVideos(data || []);
+    try {
+      const { data, error } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error('Error fetching videos:', error);
+        throw error;
+      }
+      setVideos(data || []);
+    } catch (error: any) {
+      console.error('Fetch videos error:', error);
+      toast({
+        title: "Error",
+        description: `Failed to fetch videos: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const fetchSaleProducts = async () => {
-    const { data } = await supabase
-      .from('sale_products')
-      .select(`
-        *,
-        products (
-          id,
-          name,
-          image,
-          category
-        )
-      `)
-      .order('created_at', { ascending: false });
-    setSaleProducts(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('sale_products')
+        .select(`
+          *,
+          products (
+            id,
+            name,
+            image,
+            category
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching sale products:', error);
+        throw error;
+      }
+      setSaleProducts(data || []);
+    } catch (error: any) {
+      console.error('Fetch sale products error:', error);
+      toast({
+        title: "Error",
+        description: `Failed to fetch sale products: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const uploadFile = async (file: File, bucket: string) => {
     try {
+      // Check if bucket exists, if not create it
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(b => b.name === bucket);
+      
+      if (!bucketExists) {
+        const { error: bucketError } = await supabase.storage.createBucket(bucket, {
+          public: true,
+          allowedMimeTypes: bucket === 'products' ? ['image/*'] : ['video/*'],
+          fileSizeLimit: bucket === 'products' ? 5242880 : 52428800 // 5MB for images, 50MB for videos
+        });
+        
+        if (bucketError) {
+          console.error('Error creating bucket:', bucketError);
+          throw bucketError;
+        }
+      }
+
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = fileName;
 
-      console.log('Uploading file:', { bucket, filePath, fileSize: file.size });
+      console.log('Uploading file:', { bucket, filePath, fileSize: file.size, fileType: file.type });
 
       const { data, error } = await supabase.storage
         .from(bucket)
@@ -100,6 +157,26 @@ const Admin = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error",
+        description: "Please select a valid image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Image size must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setUploading(true);
       console.log('Starting image upload...');
@@ -124,6 +201,26 @@ const Admin = () => {
   const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      toast({
+        title: "Error",
+        description: "Please select a valid video file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Video size must be less than 50MB",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setUploading(true);
@@ -283,12 +380,22 @@ const Admin = () => {
 
   const handleDeleteProduct = async (id: number) => {
     if (confirm('Are you sure you want to delete this product?')) {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (!error) {
+      try {
+        const { error } = await supabase.from('products').delete().eq('id', id);
+        if (error) {
+          console.error('Error deleting product:', error);
+          throw error;
+        }
         fetchProducts();
         toast({
           title: "Success",
           description: "Product deleted successfully!",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: `Failed to delete product: ${error.message}`,
+          variant: "destructive",
         });
       }
     }
@@ -296,12 +403,22 @@ const Admin = () => {
 
   const handleDeleteVideo = async (id: string) => {
     if (confirm('Are you sure you want to delete this video?')) {
-      const { error } = await supabase.from('videos').delete().eq('id', id);
-      if (!error) {
+      try {
+        const { error } = await supabase.from('videos').delete().eq('id', id);
+        if (error) {
+          console.error('Error deleting video:', error);
+          throw error;
+        }
         fetchVideos();
         toast({
           title: "Success",
           description: "Video deleted successfully!",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: `Failed to delete video: ${error.message}`,
+          variant: "destructive",
         });
       }
     }
@@ -309,12 +426,22 @@ const Admin = () => {
 
   const handleDeleteSaleProduct = async (id: string) => {
     if (confirm('Are you sure you want to remove this product from sale?')) {
-      const { error } = await supabase.from('sale_products').delete().eq('id', id);
-      if (!error) {
+      try {
+        const { error } = await supabase.from('sale_products').delete().eq('id', id);
+        if (error) {
+          console.error('Error deleting sale product:', error);
+          throw error;
+        }
         fetchSaleProducts();
         toast({
           title: "Success",
           description: "Sale product removed successfully!",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: `Failed to remove sale product: ${error.message}`,
+          variant: "destructive",
         });
       }
     }
