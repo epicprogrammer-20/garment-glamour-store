@@ -40,7 +40,7 @@ export const Header = () => {
             <div className="flex items-center space-x-4">
               <Link to="/" className="flex flex-col items-center">
                 <Crown size={24} className="text-purple-600 mb-1" />
-                <h1 className="text-xl font-bold text-gray-900">LUXE</h1>
+                <h1 className="text-xl font-bold text-gray-900">AURA</h1>
               </Link>
               {user && profile && (
                 <div className="hidden md:block">
@@ -81,7 +81,16 @@ export const Header = () => {
               >
                 Accessories
               </Link>
-              <a href="#sale" className="text-red-600 hover:text-red-700 transition-colors">Sale</a>
+              <Link 
+                to="/sale" 
+                className={`transition-colors ${
+                  isActive('/sale') 
+                    ? 'text-red-600 font-semibold border-b-2 border-red-600 pb-1' 
+                    : 'text-red-600 hover:text-red-700'
+                }`}
+              >
+                Sale
+              </Link>
             </nav>
             
             {/* Right side icons */}
@@ -208,13 +217,13 @@ export const Header = () => {
               >
                 Accessories
               </Link>
-              <a 
-                href="#sale" 
+              <Link 
+                to="/sale" 
                 className="text-lg text-red-600 hover:text-red-700 transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Sale
-              </a>
+              </Link>
             </nav>
           </div>
         </DrawerContent>

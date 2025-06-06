@@ -75,6 +75,7 @@ const Admin = () => {
         description: "Image uploaded successfully!",
       });
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Error",
         description: "Failed to upload image",
@@ -98,6 +99,7 @@ const Admin = () => {
         description: "Video uploaded successfully!",
       });
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Error",
         description: "Failed to upload video",
@@ -131,28 +133,31 @@ const Admin = () => {
       return;
     }
 
-    const sizesArray = newProduct.sizes.split(',').map(s => s.trim()).filter(s => s.length > 0);
-    
-    const { error } = await supabase.from('products').insert({
-      name: newProduct.name,
-      price: parseFloat(newProduct.price),
-      image: newProduct.image,
-      category: newProduct.category,
-      sizes: sizesArray,
-      description: newProduct.description
-    });
+    try {
+      const sizesArray = newProduct.sizes.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      
+      const { error } = await supabase.from('products').insert({
+        name: newProduct.name,
+        price: parseFloat(newProduct.price),
+        image: newProduct.image,
+        category: newProduct.category,
+        sizes: sizesArray,
+        description: newProduct.description
+      });
 
-    if (!error) {
+      if (error) throw error;
+
       setNewProduct({ name: '', price: '', image: '', category: 'women', sizes: '', description: '' });
       fetchProducts();
       toast({
         title: "Success",
-        description: "Product added successfully!",
+        description: "Product uploaded successfully!",
       });
-    } else {
+    } catch (error) {
+      console.error('Product add error:', error);
       toast({
         title: "Error",
-        description: "Failed to add product",
+        description: "Product upload failed",
         variant: "destructive",
       });
     }
@@ -169,19 +174,22 @@ const Admin = () => {
       return;
     }
 
-    const { error } = await supabase.from('videos').insert(newVideo);
+    try {
+      const { error } = await supabase.from('videos').insert(newVideo);
 
-    if (!error) {
+      if (error) throw error;
+
       setNewVideo({ title: '', url: '', description: '' });
       fetchVideos();
       toast({
         title: "Success",
-        description: "Video added successfully!",
+        description: "Video uploaded successfully!",
       });
-    } else {
+    } catch (error) {
+      console.error('Video add error:', error);
       toast({
         title: "Error",
-        description: "Failed to add video",
+        description: "Video upload failed",
         variant: "destructive",
       });
     }
