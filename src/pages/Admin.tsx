@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -346,13 +347,18 @@ const Admin = () => {
     }
 
     try {
-      const discountPercentage = newSaleProduct.discount_percentage || 
-        Math.round((1 - parseFloat(newSaleProduct.sale_price) / parseFloat(newSaleProduct.original_price)) * 100);
+      const originalPrice = parseFloat(newSaleProduct.original_price);
+      const salePrice = parseFloat(newSaleProduct.sale_price);
+      const productId = parseInt(newSaleProduct.product_id);
+      
+      const discountPercentage = newSaleProduct.discount_percentage 
+        ? parseInt(newSaleProduct.discount_percentage)
+        : Math.round((1 - salePrice / originalPrice) * 100);
 
       const { error } = await supabase.from('sale_products').insert({
-        product_id: parseInt(newSaleProduct.product_id),
-        original_price: parseFloat(newSaleProduct.original_price),
-        sale_price: parseFloat(newSaleProduct.sale_price),
+        product_id: productId,
+        original_price: originalPrice,
+        sale_price: salePrice,
         discount_percentage: discountPercentage,
         is_active: true
       });
