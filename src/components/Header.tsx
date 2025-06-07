@@ -18,7 +18,7 @@ import {
 
 export const Header = () => {
   const { state, dispatch } = useCart();
-  const { state: wishlistState } = useWishlist();
+  const { wishlistItems } = useWishlist(); // Use wishlistItems directly instead of state
   const { setIsSearchOpen } = useSearch();
   const { user } = useAuth();
   const { profile } = useUserData();
@@ -142,9 +142,9 @@ export const Header = () => {
               </Link>
               <Link to="/wishlist" className="p-2 text-gray-700 hover:text-black transition-colors relative">
                 <Heart size={20} />
-                {wishlistState.items.length > 0 && (
+                {wishlistItems.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {wishlistState.items.length}
+                    {wishlistItems.length}
                   </span>
                 )}
               </Link>

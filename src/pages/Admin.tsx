@@ -1,130 +1,103 @@
+
 import React, { useState, useEffect } from 'react';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lock, Plus, Trash2, Tag, Upload } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { Plus, Edit, Trash2, Upload } from 'lucide-react';
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  sizes: string[];
+  description?: string;
+}
+
+interface Video {
+  id: string;
+  title: string;
+  url: string;
+  description?: string;
+  is_active: boolean;
+}
 
 const Admin = () => {
-  const { isAdminAuthenticated, adminLogin, adminLogout } = useAdminAuth();
-  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
-  const [products, setProducts] = useState<any[]>([]);
-  const [videos, setVideos] = useState<any[]>([]);
-  const [saleProducts, setSaleProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newProduct, setNewProduct] = useState({
-    name: '', price: '', image: '', imageFile: null as File | null, category: 'women', sizes: '', description: ''
+    name: '',
+    price: '',
+    image: '',
+    imageFile: null as File | null,
+    category: 'women',
+    sizes: '',
+    description: '',
   });
   const [newVideo, setNewVideo] = useState({
-    title: '', url: '', description: ''
+    title: '',
+    url: '',
+    description: '',
   });
-  const [newSaleProduct, setNewSaleProduct] = useState({
-    product_id: '', original_price: '', sale_price: '', discount_percentage: ''
-  });
-  const [uploadMethod, setUploadMethod] = useState<'file' | 'url'>('url');
-
-  useEffect(() => {
-    if (isAdminAuthenticated) {
-      fetchProducts();
-      fetchVideos();
-      fetchSaleProducts();
-    }
-  }, [isAdminAuthenticated]);
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-      if (error) {
-        console.error('Error fetching products:', error);
-        throw error;
-      }
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
       setProducts(data || []);
-    } catch (error: any) {
-      console.error('Fetch products error:', error);
-      toast({
-        title: "Error",
-        description: `Failed to fetch products: ${error.message}`,
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error('Error fetching products:', error);
     }
   };
 
   const fetchVideos = async () => {
     try {
-      const { data, error } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
-      if (error) {
-        console.error('Error fetching videos:', error);
-        throw error;
-      }
-      setVideos(data || []);
-    } catch (error: any) {
-      console.error('Fetch videos error:', error);
-      toast({
-        title: "Error",
-        description: `Failed to fetch videos: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const fetchSaleProducts = async () => {
-    try {
       const { data, error } = await supabase
-        .from('sale_products')
-        .select(`
-          *,
-          products (
-            id,
-            name,
-            image,
-            category
-          )
-        `)
+        .from('videos')
+        .select('*')
         .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching sale products:', error);
-        throw error;
-      }
-      setSaleProducts(data || []);
-    } catch (error: any) {
-      console.error('Fetch sale products error:', error);
-      toast({
-        title: "Error",
-        description: `Failed to fetch sale products: ${error.message}`,
-        variant: "destructive",
-      });
+
+      if (error) throw error;
+      setVideos(data || []);
+    } catch (error) {
+      console.error('Error fetching videos:', error);
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = await adminLogin(loginForm.username, loginForm.password);
-    if (!result.success) {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
-    }
-  };
+  useEffect(() => {
+    const initData = async () => {
+      await Promise.all([fetchProducts(), fetchVideos()]);
+      setLoading(false);
+    };
+    initData();
+  }, []);
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Check required fields based on upload method
-    const isFileUpload = uploadMethod === 'file';
-    const hasRequiredImage = isFileUpload ? newProduct.imageFile : newProduct.image;
-    
-    if (!newProduct.name || !newProduct.price || !hasRequiredImage) {
+
+    if (!newProduct.name || !newProduct.price) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if we need to upload an image or use URL
+    if (!newProduct.image && !newProduct.imageFile) {
+      toast({
+        title: "Error",
+        description: "Please provide an image URL or upload an image file",
         variant: "destructive",
       });
       return;
@@ -133,8 +106,8 @@ const Admin = () => {
     try {
       let imageUrl = newProduct.image;
 
-      // STEP 1: Upload image to Supabase Storage if file is selected
-      if (isFileUpload && newProduct.imageFile) {
+      // If there's a file to upload, upload it first
+      if (newProduct.imageFile) {
         const fileExt = newProduct.imageFile.name.split('.').pop();
         const filePath = `products/${Date.now()}.${fileExt}`;
 
@@ -150,33 +123,41 @@ const Admin = () => {
         imageUrl = supabase.storage.from('products').getPublicUrl(filePath).data.publicUrl;
       }
 
-      // STEP 2: Insert product with image URL
-      const sizesArray = newProduct.sizes.split(',').map(s => s.trim()).filter(s => s.length > 0);
-      
-      const { error } = await supabase.from('products').insert({
+      const sizesArray = newProduct.sizes
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+      const { error: insertError } = await supabase.from('products').insert({
         name: newProduct.name,
         price: parseFloat(newProduct.price),
         image: imageUrl,
         category: newProduct.category,
         sizes: sizesArray,
-        description: newProduct.description
+        description: newProduct.description,
       });
 
-      if (error) {
-        console.error('Product insert error:', error);
-        throw error;
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        throw insertError;
       }
 
-      setNewProduct({ 
-        name: '', price: '', image: '', imageFile: null, category: 'women', sizes: '', description: '' 
+      setNewProduct({
+        name: '',
+        price: '',
+        image: '',
+        imageFile: null,
+        category: 'women',
+        sizes: '',
+        description: '',
       });
+
       fetchProducts();
       toast({
         title: "Success",
         description: "Product added successfully!",
       });
     } catch (error: any) {
-      console.error('Product add error:', error);
       toast({
         title: "Error",
         description: `Failed to add product: ${error.message}`,
@@ -187,9 +168,10 @@ const Admin = () => {
 
   const handleAddVideo = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!newVideo.title || !newVideo.url) {
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Please fill in all required fields",
         variant: "destructive",
       });
@@ -197,21 +179,27 @@ const Admin = () => {
     }
 
     try {
-      const { error } = await supabase.from('videos').insert(newVideo);
+      const { error } = await supabase.from('videos').insert({
+        title: newVideo.title,
+        url: newVideo.url,
+        description: newVideo.description,
+        is_active: true,
+      });
 
-      if (error) {
-        console.error('Video insert error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      setNewVideo({ title: '', url: '', description: '' });
+      setNewVideo({
+        title: '',
+        url: '',
+        description: '',
+      });
+
       fetchVideos();
       toast({
         title: "Success",
         description: "Video added successfully!",
       });
     } catch (error: any) {
-      console.error('Video add error:', error);
       toast({
         title: "Error",
         description: `Failed to add video: ${error.message}`,
@@ -220,524 +208,285 @@ const Admin = () => {
     }
   };
 
-  const handleAddSaleProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSaleProduct.product_id || !newSaleProduct.original_price || !newSaleProduct.sale_price) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const deleteProduct = async (id: number) => {
     try {
-      const originalPrice = parseFloat(newSaleProduct.original_price);
-      const salePrice = parseFloat(newSaleProduct.sale_price);
-      const productId = parseInt(newSaleProduct.product_id);
-      
-      const discountPercentage = newSaleProduct.discount_percentage 
-        ? parseInt(newSaleProduct.discount_percentage)
-        : Math.round((1 - salePrice / originalPrice) * 100);
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
 
-      const { error } = await supabase.from('sale_products').insert({
-        product_id: productId,
-        original_price: originalPrice,
-        sale_price: salePrice,
-        discount_percentage: discountPercentage,
-        is_active: true
-      });
+      if (error) throw error;
 
-      if (error) {
-        console.error('Sale product insert error:', error);
-        throw error;
-      }
-
-      setNewSaleProduct({ product_id: '', original_price: '', sale_price: '', discount_percentage: '' });
-      fetchSaleProducts();
+      fetchProducts();
       toast({
         title: "Success",
-        description: "Sale product added successfully!",
+        description: "Product deleted successfully!",
       });
     } catch (error: any) {
-      console.error('Sale product add error:', error);
       toast({
         title: "Error",
-        description: `Failed to add sale product: ${error.message}`,
+        description: `Failed to delete product: ${error.message}`,
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteProduct = async (id: number) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      try {
-        const { error } = await supabase.from('products').delete().eq('id', id);
-        if (error) {
-          console.error('Error deleting product:', error);
-          throw error;
-        }
-        fetchProducts();
-        toast({
-          title: "Success",
-          description: "Product deleted successfully!",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: `Failed to delete product: ${error.message}`,
-          variant: "destructive",
-        });
-      }
+  const deleteVideo = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      fetchVideos();
+      toast({
+        title: "Success",
+        description: "Video deleted successfully!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to delete video: ${error.message}`,
+        variant: "destructive",
+      });
     }
   };
 
-  const handleDeleteVideo = async (id: string) => {
-    if (confirm('Are you sure you want to delete this video?')) {
-      try {
-        const { error } = await supabase.from('videos').delete().eq('id', id);
-        if (error) {
-          console.error('Error deleting video:', error);
-          throw error;
-        }
-        fetchVideos();
-        toast({
-          title: "Success",
-          description: "Video deleted successfully!",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: `Failed to delete video: ${error.message}`,
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleDeleteSaleProduct = async (id: string) => {
-    if (confirm('Are you sure you want to remove this product from sale?')) {
-      try {
-        const { error } = await supabase.from('sale_products').delete().eq('id', id);
-        if (error) {
-          console.error('Error deleting sale product:', error);
-          throw error;
-        }
-        fetchSaleProducts();
-        toast({
-          title: "Success",
-          description: "Sale product removed successfully!",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: `Failed to remove sale product: ${error.message}`,
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  if (!isAdminAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center gap-2">
-              <Lock size={24} />
-              Admin Access
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  value={loginForm.username}
-                  onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Login to Admin Panel
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Admin Panel</h1>
-          <Button onClick={adminLogout} variant="destructive">
-            Logout & Return to Site
-          </Button>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Panel</h1>
+
+        {/* Add Product Section */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <Plus className="mr-2" size={20} />
+            Add New Product
+          </h2>
+          <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Product Name *</Label>
+              <Input
+                id="name"
+                value={newProduct.name}
+                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                placeholder="Enter product name"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="price">Price *</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                value={newProduct.price}
+                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                placeholder="Enter price"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="image-url">Image URL</Label>
+              <Input
+                id="image-url"
+                value={newProduct.image}
+                onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                placeholder="Enter image URL"
+              />
+            </div>
+            <div>
+              <Label htmlFor="image-file">Or Upload Image File</Label>
+              <Input
+                id="image-file"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setNewProduct((prev) => ({
+                      ...prev,
+                      imageFile: file,
+                    }));
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <select
+                id="category"
+                value={newProduct.category}
+                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="women">Women</option>
+                <option value="men">Men</option>
+                <option value="accessories">Accessories</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="sizes">Sizes (comma separated)</Label>
+              <Input
+                id="sizes"
+                value={newProduct.sizes}
+                onChange={(e) => setNewProduct({ ...newProduct, sizes: e.target.value })}
+                placeholder="S, M, L, XL"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newProduct.description}
+                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                placeholder="Enter product description"
+                rows={3}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Button type="submit" className="w-full">
+                Add Product
+              </Button>
+            </div>
+          </form>
         </div>
 
-        <Tabs defaultValue="products" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="videos">Videos</TabsTrigger>
-            <TabsTrigger value="sale">Sale Products</TabsTrigger>
-          </TabsList>
+        {/* Add Video Section */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <Plus className="mr-2" size={20} />
+            Add New Video
+          </h2>
+          <form onSubmit={handleAddVideo} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="video-title">Video Title *</Label>
+              <Input
+                id="video-title"
+                value={newVideo.title}
+                onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
+                placeholder="Enter video title"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="video-url">Video URL *</Label>
+              <Input
+                id="video-url"
+                value={newVideo.url}
+                onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
+                placeholder="Enter video URL"
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="video-description">Description</Label>
+              <Textarea
+                id="video-description"
+                value={newVideo.description}
+                onChange={(e) => setNewVideo({ ...newVideo, description: e.target.value })}
+                placeholder="Enter video description"
+                rows={3}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Button type="submit" className="w-full">
+                Add Video
+              </Button>
+            </div>
+          </form>
+        </div>
 
-          <TabsContent value="products" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New Product</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleAddProduct} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name">Product Name</Label>
-                      <Input
-                        id="name"
-                        value={newProduct.name}
-                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="price">Price</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        value={newProduct.price}
-                        onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Image Upload Method</Label>
-                    <div className="flex space-x-4 mt-2">
-                      <button
-                        type="button"
-                        onClick={() => setUploadMethod('url')}
-                        className={`px-4 py-2 rounded ${uploadMethod === 'url' ? 'bg-black text-white' : 'bg-gray-200'}`}
-                      >
-                        URL
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setUploadMethod('file')}
-                        className={`px-4 py-2 rounded ${uploadMethod === 'file' ? 'bg-black text-white' : 'bg-gray-200'}`}
-                      >
-                        <Upload size={16} className="mr-2 inline" />
-                        Upload File
-                      </button>
-                    </div>
-                  </div>
-
-                  {uploadMethod === 'url' ? (
-                    <div>
-                      <Label htmlFor="image">Image URL</Label>
-                      <Input
-                        id="image"
-                        placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
-                        value={newProduct.image}
-                        onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
-                        required
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <Label htmlFor="imageFile">Upload Image</Label>
-                      <Input
-                        id="imageFile"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setNewProduct({ ...newProduct, imageFile: file });
-                          }
-                        }}
-                        required
-                      />
-                      {newProduct.imageFile && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          Selected: {newProduct.imageFile.name}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="category">Category</Label>
-                      <select
-                        id="category"
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        value={newProduct.category}
-                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                      >
-                        <option value="women">Women</option>
-                        <option value="men">Men</option>
-                        <option value="accessories">Accessories</option>
-                      </select>
-                    </div>
-                    <div>
-                      <Label htmlFor="sizes">Sizes (comma separated)</Label>
-                      <Input
-                        id="sizes"
-                        value={newProduct.sizes}
-                        onChange={(e) => setNewProduct({ ...newProduct, sizes: e.target.value })}
-                        placeholder="XS, S, M, L, XL"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Input
-                      id="description"
-                      value={newProduct.description}
-                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full">
-                    <Plus size={16} className="mr-2" />
-                    Add Product
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Existing Products</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {products.map((product) => (
-                    <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded" />
-                        <div>
-                          <h3 className="font-semibold">{product.name}</h3>
-                          <p className="text-gray-600">${product.price} - {product.category}</p>
-                        </div>
+        {/* Products List */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Products ({products.length})</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full table-auto">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2">Image</th>
+                  <th className="text-left py-2">Name</th>
+                  <th className="text-left py-2">Price</th>
+                  <th className="text-left py-2">Category</th>
+                  <th className="text-left py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product) => (
+                  <tr key={product.id} className="border-b">
+                    <td className="py-2">
+                      <img src={product.image} alt={product.name} className="w-12 h-12 object-cover rounded" />
+                    </td>
+                    <td className="py-2">{product.name}</td>
+                    <td className="py-2">${product.price}</td>
+                    <td className="py-2 capitalize">{product.category}</td>
+                    <td className="py-2">
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <Edit size={16} />
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => deleteProduct(product.id)}>
+                          <Trash2 size={16} />
+                        </Button>
                       </div>
-                      <Button
-                        onClick={() => handleDeleteProduct(product.id)}
-                        variant="destructive"
-                        size="sm"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-          <TabsContent value="videos" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New Video</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleAddVideo} className="space-y-4">
-                  <div>
-                    <Label htmlFor="title">Video Title</Label>
-                    <Input
-                      id="title"
-                      value={newVideo.title}
-                      onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="url">Video URL</Label>
-                    <Input
-                      id="url"
-                      placeholder="Enter video URL (e.g., https://example.com/video.mp4)"
-                      value={newVideo.url}
-                      onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Input
-                      id="description"
-                      value={newVideo.description}
-                      onChange={(e) => setNewVideo({ ...newVideo, description: e.target.value })}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <Plus size={16} className="mr-2" />
-                    Add Video
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Existing Videos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {videos.map((video) => (
-                    <div key={video.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h3 className="font-semibold">{video.title}</h3>
-                        <p className="text-gray-600">{video.description}</p>
-                        <p className="text-sm text-blue-600">{video.url}</p>
+        {/* Videos List */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Videos ({videos.length})</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full table-auto">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2">Title</th>
+                  <th className="text-left py-2">URL</th>
+                  <th className="text-left py-2">Status</th>
+                  <th className="text-left py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {videos.map((video) => (
+                  <tr key={video.id} className="border-b">
+                    <td className="py-2">{video.title}</td>
+                    <td className="py-2">
+                      <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {video.url.substring(0, 50)}...
+                      </a>
+                    </td>
+                    <td className="py-2">
+                      <span className={`px-2 py-1 rounded text-sm ${video.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {video.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="py-2">
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <Edit size={16} />
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => deleteVideo(video.id)}>
+                          <Trash2 size={16} />
+                        </Button>
                       </div>
-                      <Button
-                        onClick={() => handleDeleteVideo(video.id)}
-                        variant="destructive"
-                        size="sm"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="sale" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Tag size={20} />
-                  Add Product to Sale
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleAddSaleProduct} className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="product_id">Select Product</Label>
-                    <select
-                      id="product_id"
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      value={newSaleProduct.product_id}
-                      onChange={(e) => setNewSaleProduct({ ...newSaleProduct, product_id: e.target.value })}
-                      required
-                    >
-                      <option value="">Select a product</option>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name} - ${product.price}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="original_price">Original Price</Label>
-                    <Input
-                      id="original_price"
-                      type="number"
-                      step="0.01"
-                      value={newSaleProduct.original_price}
-                      onChange={(e) => setNewSaleProduct({ ...newSaleProduct, original_price: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sale_price">Sale Price</Label>
-                    <Input
-                      id="sale_price"
-                      type="number"
-                      step="0.01"
-                      value={newSaleProduct.sale_price}
-                      onChange={(e) => setNewSaleProduct({ ...newSaleProduct, sale_price: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="discount_percentage">Discount % (auto-calculated)</Label>
-                    <Input
-                      id="discount_percentage"
-                      type="number"
-                      value={newSaleProduct.discount_percentage}
-                      onChange={(e) => setNewSaleProduct({ ...newSaleProduct, discount_percentage: e.target.value })}
-                      placeholder="Auto-calculated"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Button type="submit" className="w-full">
-                      <Tag size={16} className="mr-2" />
-                      Add to Sale
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Products on Sale</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {saleProducts.map((saleProduct) => (
-                    <div key={saleProduct.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        {saleProduct.products && (
-                          <img 
-                            src={saleProduct.products.image} 
-                            alt={saleProduct.products.name} 
-                            className="w-16 h-16 object-cover rounded" 
-                          />
-                        )}
-                        <div>
-                          <h3 className="font-semibold">{saleProduct.products?.name}</h3>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-gray-500 line-through">${saleProduct.original_price}</span>
-                            <span className="text-red-600 font-bold">${saleProduct.sale_price}</span>
-                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">
-                              {saleProduct.discount_percentage}% OFF
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => handleDeleteSaleProduct(saleProduct.id)}
-                        variant="destructive"
-                        size="sm"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-
-      <Footer />
     </div>
   );
 };

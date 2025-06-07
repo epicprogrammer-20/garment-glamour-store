@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -10,7 +9,7 @@ import { User, Mail, Lock, Edit, Heart, ShoppingBag, Star } from 'lucide-react';
 const Profile = () => {
   const { user, signIn, signUp, signOut } = useAuth();
   const { profile, orderCount, reviewCount, loading } = useUserData();
-  const { state: wishlistState } = useWishlist();
+  const { wishlistItems } = useWishlist(); // Use wishlistItems directly instead of state
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -86,7 +85,7 @@ const Profile = () => {
               <div className="bg-gray-50 p-6 rounded-lg text-center">
                 <Heart size={24} className="mx-auto mb-2 text-gray-600" />
                 <h3 className="font-semibold text-gray-900">Wishlist</h3>
-                <p className="text-2xl font-bold text-gray-900">{wishlistState.items.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{wishlistItems.length}</p>
               </div>
               <div className="bg-gray-50 p-6 rounded-lg text-center">
                 <Star size={24} className="mx-auto mb-2 text-gray-600" />
