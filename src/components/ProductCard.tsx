@@ -1,9 +1,8 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart } from 'lucide-react';
-import { useCart } from '../contexts/CartContext';
-import { useWishlist } from '../contexts/WishlistContext';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Heart } from 'lucide-react';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 interface Product {
   id: number;
@@ -11,7 +10,6 @@ interface Product {
   price: number;
   image: string;
   category: string;
-  sizes: string[];
 }
 
 interface ProductCardProps {
@@ -19,95 +17,53 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
-  const [isLiking, setIsLiking] = useState(false);
-  const { dispatch } = useCart();
-  const { dispatch: wishlistDispatch, isInWishlist } = useWishlist();
-  
+  const navigate = useNavigate();
+  const { toggleWishlist, isInWishlist, productLikes } = useWishlist();
+
+  const handleHeartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleWishlist(product.id);
+  };
+
+  const handleCardClick = () => {
+    navigate(`/product/${product.id}`);
+  };
+
+  const likeCount = productLikes[product.id] || 0;
   const isLiked = isInWishlist(product.id);
-  
-  const handleAddToCart = () => {
-    dispatch({
-      type: 'ADD_ITEM',
-      payload: { ...product, size: selectedSize }
-    });
-  };
-  
-  const handleToggleWishlist = () => {
-    setIsLiking(true);
-    setTimeout(() => {
-      if (isLiked) {
-        wishlistDispatch({ type: 'REMOVE_ITEM', payload: product.id });
-      } else {
-        wishlistDispatch({ type: 'ADD_ITEM', payload: product });
-      }
-      setIsLiking(false);
-    }, 200);
-  };
-  
+
   return (
-    <div className="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden transform hover:scale-105">
-      <div className="relative overflow-hidden">
-        <Link to={`/product/${product.id}`}>
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
-          />
-        </Link>
+    <div 
+      className="group cursor-pointer"
+      onClick={handleCardClick}
+    >
+      <div className="relative overflow-hidden rounded-lg bg-gray-100">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-80 object-cover transition-transform duration-300 group-hover:scale-105"
+        />
         <button
-          onClick={handleToggleWishlist}
-          className={`absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-300 ${
-            isLiking ? 'animate-pulse scale-125' : ''
-          }`}
+          onClick={handleHeartClick}
+          className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors"
         >
           <Heart
-            size={16}
-            className={`transition-all duration-300 ${
-              isLiked 
-                ? 'text-red-500 fill-current scale-110' 
-                : 'text-gray-600 hover:text-red-500'
+            size={20}
+            className={`transition-colors ${
+              isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'
             }`}
           />
         </button>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      </div>
-      
-      <div className="p-6">
-        <Link to={`/product/${product.id}`}>
-          <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">
-            {product.name}
-          </h3>
-        </Link>
-        <p className="text-2xl font-bold text-gray-900 mb-4">${product.price}</p>
-        
-        {/* Size selector */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-2">Size:</p>
-          <div className="flex flex-wrap gap-2">
-            {product.sizes.map((size) => (
-              <button
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`px-3 py-1 text-sm border rounded-md transition-all duration-200 ${
-                  selectedSize === size
-                    ? 'border-black bg-black text-white transform scale-105'
-                    : 'border-gray-300 hover:border-gray-400 hover:scale-105'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
+        {likeCount > 0 && (
+          <div className="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs">
+            {likeCount} ❤️
           </div>
-        </div>
-        
-        <button
-          onClick={handleAddToCart}
-          className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105"
-        >
-          <ShoppingCart size={16} />
-          <span>Add to Cart</span>
-        </button>
+        )}
+      </div>
+      <div className="mt-4">
+        <h3 className="text-lg font-medium text-gray-900">{product.name}</h3>
+        <p className="text-gray-600 capitalize">{product.category}</p>
+        <p className="text-xl font-bold text-gray-900 mt-1">${product.price}</p>
       </div>
     </div>
   );

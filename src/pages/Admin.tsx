@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lock, Plus, Trash2, Tag } from 'lucide-react';
+import { Lock, Plus, Trash2, Tag, Upload } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const Admin = () => {
@@ -19,7 +18,7 @@ const Admin = () => {
   const [videos, setVideos] = useState<any[]>([]);
   const [saleProducts, setSaleProducts] = useState<any[]>([]);
   const [newProduct, setNewProduct] = useState({
-    name: '', price: '', image: '', category: 'women', sizes: '', description: ''
+    name: '', price: '', image: '', imageFile: null as File | null, category: 'women', sizes: '', description: ''
   });
   const [newVideo, setNewVideo] = useState({
     title: '', url: '', description: ''
@@ -27,6 +26,7 @@ const Admin = () => {
   const [newSaleProduct, setNewSaleProduct] = useState({
     product_id: '', original_price: '', sale_price: '', discount_percentage: ''
   });
+  const [uploadMethod, setUploadMethod] = useState<'file' | 'url'>('url');
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -116,7 +116,12 @@ const Admin = () => {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProduct.name || !newProduct.price || !newProduct.image) {
+    
+    // Check required fields based on upload method
+    const isFileUpload = uploadMethod === 'file';
+    const hasRequiredImage = isFileUpload ? newProduct.imageFile : newProduct.image;
+    
+    if (!newProduct.name || !newProduct.price || !hasRequiredImage) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -126,12 +131,32 @@ const Admin = () => {
     }
 
     try {
+      let imageUrl = newProduct.image;
+
+      // STEP 1: Upload image to Supabase Storage if file is selected
+      if (isFileUpload && newProduct.imageFile) {
+        const fileExt = newProduct.imageFile.name.split('.').pop();
+        const filePath = `products/${Date.now()}.${fileExt}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('products')
+          .upload(filePath, newProduct.imageFile);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw uploadError;
+        }
+
+        imageUrl = supabase.storage.from('products').getPublicUrl(filePath).data.publicUrl;
+      }
+
+      // STEP 2: Insert product with image URL
       const sizesArray = newProduct.sizes.split(',').map(s => s.trim()).filter(s => s.length > 0);
       
       const { error } = await supabase.from('products').insert({
         name: newProduct.name,
         price: parseFloat(newProduct.price),
-        image: newProduct.image,
+        image: imageUrl,
         category: newProduct.category,
         sizes: sizesArray,
         description: newProduct.description
@@ -142,7 +167,9 @@ const Admin = () => {
         throw error;
       }
 
-      setNewProduct({ name: '', price: '', image: '', category: 'women', sizes: '', description: '' });
+      setNewProduct({ 
+        name: '', price: '', image: '', imageFile: null, category: 'women', sizes: '', description: '' 
+      });
       fetchProducts();
       toast({
         title: "Success",
@@ -378,61 +405,112 @@ const Admin = () => {
                 <CardTitle>Add New Product</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleAddProduct} className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleAddProduct} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Product Name</Label>
+                      <Input
+                        id="name"
+                        value={newProduct.name}
+                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="price">Price</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        value={newProduct.price}
+                        onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="name">Product Name</Label>
-                    <Input
-                      id="name"
-                      value={newProduct.name}
-                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                      required
-                    />
+                    <Label>Image Upload Method</Label>
+                    <div className="flex space-x-4 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setUploadMethod('url')}
+                        className={`px-4 py-2 rounded ${uploadMethod === 'url' ? 'bg-black text-white' : 'bg-gray-200'}`}
+                      >
+                        URL
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUploadMethod('file')}
+                        className={`px-4 py-2 rounded ${uploadMethod === 'file' ? 'bg-black text-white' : 'bg-gray-200'}`}
+                      >
+                        <Upload size={16} className="mr-2 inline" />
+                        Upload File
+                      </button>
+                    </div>
                   </div>
+
+                  {uploadMethod === 'url' ? (
+                    <div>
+                      <Label htmlFor="image">Image URL</Label>
+                      <Input
+                        id="image"
+                        placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                        value={newProduct.image}
+                        onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                        required
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <Label htmlFor="imageFile">Upload Image</Label>
+                      <Input
+                        id="imageFile"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setNewProduct({ ...newProduct, imageFile: file });
+                          }
+                        }}
+                        required
+                      />
+                      {newProduct.imageFile && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          Selected: {newProduct.imageFile.name}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="category">Category</Label>
+                      <select
+                        id="category"
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        value={newProduct.category}
+                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                      >
+                        <option value="women">Women</option>
+                        <option value="men">Men</option>
+                        <option value="accessories">Accessories</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="sizes">Sizes (comma separated)</Label>
+                      <Input
+                        id="sizes"
+                        value={newProduct.sizes}
+                        onChange={(e) => setNewProduct({ ...newProduct, sizes: e.target.value })}
+                        placeholder="XS, S, M, L, XL"
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="price">Price</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={newProduct.price}
-                      onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="image">Image URL</Label>
-                    <Input
-                      id="image"
-                      placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
-                      value={newProduct.image}
-                      onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <select
-                      id="category"
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      value={newProduct.category}
-                      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                    >
-                      <option value="women">Women</option>
-                      <option value="men">Men</option>
-                      <option value="accessories">Accessories</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="sizes">Sizes (comma separated)</Label>
-                    <Input
-                      id="sizes"
-                      value={newProduct.sizes}
-                      onChange={(e) => setNewProduct({ ...newProduct, sizes: e.target.value })}
-                      placeholder="XS, S, M, L, XL"
-                      required
-                    />
-                  </div>
-                  <div className="col-span-2">
                     <Label htmlFor="description">Description</Label>
                     <Input
                       id="description"
@@ -440,12 +518,11 @@ const Admin = () => {
                       onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                     />
                   </div>
-                  <div className="col-span-2">
-                    <Button type="submit" className="w-full">
-                      <Plus size={16} className="mr-2" />
-                      Add Product
-                    </Button>
-                  </div>
+
+                  <Button type="submit" className="w-full">
+                    <Plus size={16} className="mr-2" />
+                    Add Product
+                  </Button>
                 </form>
               </CardContent>
             </Card>
