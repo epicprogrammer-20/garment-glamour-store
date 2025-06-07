@@ -5,27 +5,17 @@ import { Footer } from '../components/Footer';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserData } from '../hooks/useUserData';
 import { useWishlist } from '../contexts/WishlistContext';
-import { User, Mail, Lock, Edit, Heart, ShoppingBag, Star, Phone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
+import { User, Mail, Lock, Edit, Heart, ShoppingBag, Star } from 'lucide-react';
 
 const Profile = () => {
-  const { user, signIn, signUp, verifyOtp, signOut } = useAuth();
+  const { user, signIn, signUp, signOut } = useAuth();
   const { profile, orderCount, reviewCount, loading } = useUserData();
   const { state: wishlistState } = useWishlist();
   const [isLogin, setIsLogin] = useState(true);
-  const [showOtpVerification, setShowOtpVerification] = useState(false);
-  const [otpValue, setOtpValue] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     name: '',
-    phone: '',
     confirmPassword: ''
   });
   const [authError, setAuthError] = useState('');
@@ -45,48 +35,18 @@ const Profile = () => {
           setAuthError('Passwords do not match');
           return;
         }
-        
-        if (!formData.phone) {
-          setAuthError('Phone number is required for verification');
-          return;
-        }
 
-        const { error, needsVerification } = await signUp(
-          formData.email, 
-          formData.password, 
-          formData.name,
-          formData.phone
-        );
+        const { error } = await signUp(formData.email, formData.password, formData.name);
         
         if (error) {
           setAuthError(error.message);
-        } else if (needsVerification) {
-          setShowOtpVerification(true);
-          setAuthError('');
+        } else {
+          setAuthError('Account created successfully! Please check your email to verify your account.');
+          setIsLogin(true);
         }
       }
     } catch (error) {
       setAuthError('An unexpected error occurred');
-    }
-  };
-
-  const handleOtpVerification = async () => {
-    if (otpValue.length !== 6) {
-      setAuthError('Please enter the complete 6-digit code');
-      return;
-    }
-
-    try {
-      const { error } = await verifyOtp(formData.phone, otpValue);
-      if (error) {
-        setAuthError(error.message);
-      } else {
-        setShowOtpVerification(false);
-        setAuthError('Account verified successfully! You can now sign in.');
-        setIsLogin(true);
-      }
-    } catch (error) {
-      setAuthError('Verification failed. Please try again.');
     }
   };
 
@@ -96,68 +56,6 @@ const Profile = () => {
       [e.target.name]: e.target.value
     });
   };
-
-  if (showOtpVerification) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        
-        <div className="max-w-md mx-auto px-4 py-16">
-          <div className="bg-white rounded-lg shadow-lg border p-8">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Phone</h1>
-              <p className="text-gray-600">
-                We've sent a 6-digit code to {formData.phone}
-              </p>
-            </div>
-
-            {authError && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                {authError}
-              </div>
-            )}
-
-            <div className="space-y-6">
-              <div className="flex justify-center">
-                <InputOTP
-                  maxLength={6}
-                  value={otpValue}
-                  onChange={(value) => setOtpValue(value)}
-                >
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-
-              <Button
-                onClick={handleOtpVerification}
-                className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
-              >
-                Verify Code
-              </Button>
-
-              <div className="text-center">
-                <button
-                  onClick={() => setShowOtpVerification(false)}
-                  className="text-gray-600 hover:underline"
-                >
-                  Back to signup
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <Footer />
-      </div>
-    );
-  }
 
   if (user && profile) {
     return (
@@ -258,7 +156,11 @@ const Profile = () => {
           </div>
 
           {authError && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div className={`mb-4 p-3 border rounded ${
+              authError.includes('successfully') 
+                ? 'bg-green-100 border-green-400 text-green-700' 
+                : 'bg-red-100 border-red-400 text-red-700'
+            }`}>
               {authError}
             </div>
           )}
@@ -297,27 +199,6 @@ const Profile = () => {
                 />
               </div>
             </div>
-
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <div className="relative">
-                  <Phone size={20} className="absolute left-3 top-3 text-gray-400" />
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    placeholder="+1234567890 (include country code)"
-                    required
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Include country code (e.g., +1 for US, +44 for UK, +263 for Zimbabwe)
-                </p>
-              </div>
-            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>

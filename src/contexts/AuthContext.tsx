@@ -7,31 +7,12 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string, phone: string) => Promise<{ error: any; needsVerification?: boolean }>;
-  verifyOtp: (phone: string, token: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Helper function to format phone number to E.164
-const formatPhoneToE164 = (phone: string): string => {
-  // Remove all non-digit characters except +
-  let cleaned = phone.replace(/[^\d+]/g, '');
-  
-  // If it doesn't start with +, assume it needs a country code
-  if (!cleaned.startsWith('+')) {
-    // If it starts with 0, remove it (common in many countries)
-    if (cleaned.startsWith('0')) {
-      cleaned = cleaned.substring(1);
-    }
-    // Default to US country code if no + provided
-    cleaned = '+1' + cleaned;
-  }
-  
-  return cleaned;
-};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -59,21 +40,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string, phone: string) => {
+  const signUp = async (email: string, password: string, name: string) => {
     try {
-      const formattedPhone = formatPhoneToE164(phone);
-      console.log('Formatted phone:', formattedPhone);
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        phone: formattedPhone,
         options: {
           data: { 
-            name,
-            phone: formattedPhone
-          },
-          channel: 'sms'
+            name
+          }
         }
       });
 
@@ -82,36 +57,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { error };
       }
 
-      // If user is not confirmed, they need OTP verification
-      if (data.user && !data.user.phone_confirmed_at) {
-        return { error: null, needsVerification: true };
-      }
-
       return { error: null };
     } catch (error) {
       console.error('Signup catch error:', error);
-      return { error };
-    }
-  };
-
-  const verifyOtp = async (phone: string, token: string) => {
-    try {
-      const formattedPhone = formatPhoneToE164(phone);
-      console.log('Verifying OTP for phone:', formattedPhone);
-
-      const { error } = await supabase.auth.verifyOtp({
-        phone: formattedPhone,
-        token,
-        type: 'sms'
-      });
-      
-      if (error) {
-        console.error('OTP verification error:', error);
-      }
-      
-      return { error };
-    } catch (error) {
-      console.error('OTP verification catch error:', error);
       return { error };
     }
   };
@@ -130,7 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, verifyOtp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
