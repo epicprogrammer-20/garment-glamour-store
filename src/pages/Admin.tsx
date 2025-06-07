@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lock, Plus, Trash2, Upload, Tag } from 'lucide-react';
+import { Lock, Plus, Trash2, Tag } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const Admin = () => {
@@ -26,7 +27,6 @@ const Admin = () => {
   const [newSaleProduct, setNewSaleProduct] = useState({
     product_id: '', original_price: '', sale_price: '', discount_percentage: ''
   });
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -97,125 +97,6 @@ const Admin = () => {
       toast({
         title: "Error",
         description: `Failed to fetch sale products: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const uploadFile = async (file: File, bucket: string) => {
-    try {
-      setUploading(true);
-      console.log('Starting upload for:', { bucket, fileName: file.name, fileSize: file.size });
-
-      // Create a unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-
-      console.log('Uploading to bucket:', bucket, 'with filename:', fileName);
-
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) {
-        console.error('Storage upload error:', error);
-        throw error;
-      }
-
-      console.log('Upload successful:', data);
-
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(fileName);
-
-      console.log('Public URL generated:', urlData.publicUrl);
-      return urlData.publicUrl;
-    } catch (error) {
-      console.error('Upload file error:', error);
-      throw error;
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Error",
-        description: "Please select a valid image file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Error",
-        description: "Image size must be less than 5MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      console.log('Starting image upload...');
-      const imageUrl = await uploadFile(file, 'product-images');
-      setNewProduct({ ...newProduct, image: imageUrl });
-      toast({
-        title: "Success",
-        description: "Image uploaded successfully!",
-      });
-    } catch (error: any) {
-      console.error('Image upload error:', error);
-      toast({
-        title: "Error",
-        description: `Failed to upload image: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('video/')) {
-      toast({
-        title: "Error",
-        description: "Please select a valid video file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (file.size > 50 * 1024 * 1024) {
-      toast({
-        title: "Error",
-        description: "Video size must be less than 50MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      console.log('Starting video upload...');
-      const videoUrl = await uploadFile(file, 'videos');
-      setNewVideo({ ...newVideo, url: videoUrl });
-      toast({
-        title: "Success",
-        description: "Video uploaded successfully!",
-      });
-    } catch (error: any) {
-      console.error('Video upload error:', error);
-      toast({
-        title: "Error",
-        description: `Failed to upload video: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -519,33 +400,14 @@ const Admin = () => {
                     />
                   </div>
                   <div className="col-span-2">
-                    <Label htmlFor="image">Product Image</Label>
-                    <div className="space-y-2">
-                      <Input
-                        id="image"
-                        placeholder="Image URL or upload file below"
-                        value={newProduct.image}
-                        onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
-                      />
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                          id="image-upload"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById('image-upload')?.click()}
-                          disabled={uploading}
-                        >
-                          <Upload size={16} className="mr-2" />
-                          {uploading ? 'Uploading...' : 'Upload Image'}
-                        </Button>
-                      </div>
-                    </div>
+                    <Label htmlFor="image">Image URL</Label>
+                    <Input
+                      id="image"
+                      placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                      value={newProduct.image}
+                      onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                      required
+                    />
                   </div>
                   <div>
                     <Label htmlFor="category">Category</Label>
@@ -635,32 +497,13 @@ const Admin = () => {
                   </div>
                   <div>
                     <Label htmlFor="url">Video URL</Label>
-                    <div className="space-y-2">
-                      <Input
-                        id="url"
-                        placeholder="Video URL or upload file below"
-                        value={newVideo.url}
-                        onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
-                      />
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="file"
-                          accept="video/*"
-                          onChange={handleVideoUpload}
-                          className="hidden"
-                          id="video-upload"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById('video-upload')?.click()}
-                          disabled={uploading}
-                        >
-                          <Upload size={16} className="mr-2" />
-                          {uploading ? 'Uploading...' : 'Upload Video'}
-                        </Button>
-                      </div>
-                    </div>
+                    <Input
+                      id="url"
+                      placeholder="Enter video URL (e.g., https://example.com/video.mp4)"
+                      value={newVideo.url}
+                      onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
+                      required
+                    />
                   </div>
                   <div>
                     <Label htmlFor="description">Description</Label>
