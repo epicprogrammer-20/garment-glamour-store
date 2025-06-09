@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, LogOut } from 'lucide-react';
+import AdminAuth from '@/components/AdminAuth';
+import ProductFilters from '@/components/ProductFilters';
 
 interface Product {
   id: number;
@@ -27,9 +29,19 @@ interface Video {
 }
 
 const Admin = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter and sort states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sizeFilter, setSizeFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
   const [newProduct, setNewProduct] = useState({
     name: '',
     price: '',
@@ -44,6 +56,133 @@ const Admin = () => {
     url: '',
     description: '',
   });
+
+  useEffect(() => {
+    const authStatus = localStorage.getItem('adminAuthenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const initData = async () => {
+        await Promise.all([fetchProducts(), fetchVideos(), createSampleData()]);
+      };
+      initData();
+    }
+  }, [isAuthenticated]);
+
+  // Filter and sort products
+  useEffect(() => {
+    let filtered = [...products];
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply category filter
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(product => product.category === categoryFilter);
+    }
+
+    // Apply size filter
+    if (sizeFilter !== 'all') {
+      filtered = filtered.filter(product => product.sizes.includes(sizeFilter));
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aVal: any = a[sortBy as keyof Product];
+      let bVal: any = b[sortBy as keyof Product];
+
+      if (sortBy === 'price') {
+        aVal = Number(aVal);
+        bVal = Number(bVal);
+      }
+
+      if (sortOrder === 'asc') {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
+    });
+
+    setFilteredProducts(filtered);
+  }, [products, searchTerm, categoryFilter, sizeFilter, sortBy, sortOrder]);
+
+  const createSampleData = async () => {
+    try {
+      // Check if sample products already exist
+      const { data: existingProducts } = await supabase
+        .from('products')
+        .select('name')
+        .in('name', ['Sample T-Shirt', 'Sample Jeans']);
+
+      if (existingProducts && existingProducts.length === 0) {
+        // Create sample regular product
+        const { error: productError } = await supabase
+          .from('products')
+          .insert({
+            name: 'Sample T-Shirt',
+            price: 29.99,
+            image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=600&fit=crop',
+            category: 'women',
+            sizes: ['S', 'M', 'L', 'XL'],
+            description: 'A comfortable sample t-shirt for testing purposes.',
+          });
+
+        if (productError) {
+          console.error('Error creating sample product:', productError);
+        }
+
+        // Create sample product for sale
+        const { data: sampleProduct, error: insertError } = await supabase
+          .from('products')
+          .insert({
+            name: 'Sample Jeans',
+            price: 79.99,
+            image: 'https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=400&h=600&fit=crop',
+            category: 'men',
+            sizes: ['30', '32', '34', '36'],
+            description: 'Sample jeans currently on sale for testing.',
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creating sample sale product:', insertError);
+        } else if (sampleProduct) {
+          // Create sale entry for the jeans
+          const { error: saleError } = await supabase
+            .from('sale_products')
+            .insert({
+              product_id: sampleProduct.id,
+              original_price: 79.99,
+              sale_price: 49.99,
+              discount_percentage: 37,
+              is_active: true,
+            });
+
+          if (saleError) {
+            console.error('Error creating sale entry:', saleError);
+          }
+        }
+
+        toast({
+          title: "Sample Data Created",
+          description: "Sample products have been added for testing.",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating sample data:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -73,13 +212,18 @@ const Admin = () => {
     }
   };
 
-  useEffect(() => {
-    const initData = async () => {
-      await Promise.all([fetchProducts(), fetchVideos()]);
-      setLoading(false);
-    };
-    initData();
-  }, []);
+  const handleLogout = () => {
+    localStorage.removeItem('adminAuthenticated');
+    setIsAuthenticated(false);
+  };
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setCategoryFilter('all');
+    setSizeFilter('all');
+    setSortBy('created_at');
+    setSortOrder('desc');
+  };
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +237,6 @@ const Admin = () => {
       return;
     }
 
-    // Check if we need to upload an image or use URL
     if (!newProduct.image && !newProduct.imageFile) {
       toast({
         title: "Error",
@@ -106,7 +249,6 @@ const Admin = () => {
     try {
       let imageUrl = newProduct.image;
 
-      // If there's a file to upload, upload it first
       if (newProduct.imageFile) {
         const fileExt = newProduct.imageFile.name.split('.').pop();
         const filePath = `products/${Date.now()}.${fileExt}`;
@@ -258,10 +400,35 @@ const Admin = () => {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
+  if (!isAuthenticated) {
+    return <AdminAuth onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Panel</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+          <Button onClick={handleLogout} variant="outline">
+            <LogOut className="mr-2" size={16} />
+            Logout
+          </Button>
+        </div>
+
+        {/* Product Filters */}
+        <ProductFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+          sizeFilter={sizeFilter}
+          setSizeFilter={setSizeFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          onReset={resetFilters}
+        />
 
         {/* Add Product Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
@@ -405,7 +572,7 @@ const Admin = () => {
 
         {/* Products List */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Products ({products.length})</h2>
+          <h2 className="text-xl font-semibold mb-4">Products ({filteredProducts.length} of {products.length})</h2>
           <div className="overflow-x-auto">
             <table className="w-full table-auto">
               <thead>
@@ -414,11 +581,12 @@ const Admin = () => {
                   <th className="text-left py-2">Name</th>
                   <th className="text-left py-2">Price</th>
                   <th className="text-left py-2">Category</th>
+                  <th className="text-left py-2">Sizes</th>
                   <th className="text-left py-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} className="border-b">
                     <td className="py-2">
                       <img src={product.image} alt={product.name} className="w-12 h-12 object-cover rounded" />
@@ -426,6 +594,7 @@ const Admin = () => {
                     <td className="py-2">{product.name}</td>
                     <td className="py-2">${product.price}</td>
                     <td className="py-2 capitalize">{product.category}</td>
+                    <td className="py-2">{product.sizes.join(', ')}</td>
                     <td className="py-2">
                       <div className="flex space-x-2">
                         <Button size="sm" variant="outline">
