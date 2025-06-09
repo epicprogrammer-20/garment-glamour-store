@@ -11,15 +11,17 @@ interface AdminAuthProps {
 }
 
 const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [securityCode, setSecurityCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simple password check - in production, use proper authentication
-    if (password === 'admin123') {
+    // Enhanced security check - in production, use proper authentication
+    if (username === 'admin' && password === 'admin123' && securityCode === 'SECURE2024') {
       localStorage.setItem('adminAuthenticated', 'true');
       onAuthenticated();
       toast({
@@ -29,7 +31,7 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
     } else {
       toast({
         title: "Error",
-        description: "Invalid password",
+        description: "Invalid credentials",
         variant: "destructive",
       });
     }
@@ -42,10 +44,21 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Admin Access</CardTitle>
-          <CardDescription>Enter password to access the admin panel</CardDescription>
+          <CardDescription>Enter credentials to access the admin panel</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter username"
+                required
+              />
+            </div>
             <div>
               <Label htmlFor="password">Password</Label>
               <Input
@@ -53,11 +66,24 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter admin password"
+                placeholder="Enter password"
                 required
               />
-              <p className="text-sm text-gray-500 mt-1">Default password: admin123</p>
             </div>
+            <div>
+              <Label htmlFor="securityCode">Security Code</Label>
+              <Input
+                id="securityCode"
+                type="password"
+                value={securityCode}
+                onChange={(e) => setSecurityCode(e.target.value)}
+                placeholder="Enter security code"
+                required
+              />
+            </div>
+            <p className="text-sm text-gray-500">
+              Default credentials: admin / admin123 / SECURE2024
+            </p>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Authenticating...' : 'Login'}
             </Button>

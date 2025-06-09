@@ -18,18 +18,31 @@ import {
 
 export const Header = () => {
   const { state, dispatch } = useCart();
-  const { wishlistItems } = useWishlist(); // Use wishlistItems directly instead of state
+  const { wishlistItems } = useWishlist();
   const { setIsSearchOpen } = useSearch();
   const { user } = useAuth();
   const { profile } = useUserData();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('EN');
-  const [showAdminHint, setShowAdminHint] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
   const location = useLocation();
   
   const isActive = (path: string) => location.pathname === path;
   
   const languages = ['EN', 'ES', 'FR', 'DE', 'IT'];
+
+  const handleSettingsClick = () => {
+    setTapCount(prev => {
+      const newCount = prev + 1;
+      if (newCount === 7) {
+        window.location.href = '/admin';
+        return 0;
+      }
+      // Reset count after 2 seconds of inactivity
+      setTimeout(() => setTapCount(0), 2000);
+      return newCount;
+    });
+  };
   
   return (
     <>
@@ -115,21 +128,13 @@ export const Header = () => {
               </div>
 
               {/* Admin Access (Hidden) */}
-              <div className="relative">
-                <button 
-                  onClick={() => setShowAdminHint(!showAdminHint)}
-                  onDoubleClick={() => window.location.href = '/admin'}
-                  className="p-2 text-gray-700 hover:text-black transition-colors"
-                  title="Settings"
-                >
-                  <Settings size={16} />
-                </button>
-                {showAdminHint && (
-                  <div className="absolute right-0 top-full mt-1 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                    Double-click for admin
-                  </div>
-                )}
-              </div>
+              <button 
+                onClick={handleSettingsClick}
+                className="p-2 text-gray-700 hover:text-black transition-colors"
+                title="Settings"
+              >
+                <Settings size={16} />
+              </button>
               
               <button 
                 onClick={() => setIsSearchOpen(true)}
