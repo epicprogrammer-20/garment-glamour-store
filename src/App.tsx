@@ -17,6 +17,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import Wishlist from "./pages/Wishlist";
+import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
 import Contact from "./pages/Contact";
 import Help from "./pages/Help";
