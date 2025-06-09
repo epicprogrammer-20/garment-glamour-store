@@ -11,7 +11,6 @@ interface WishlistContextType {
   toggleWishlist: (productId: number) => Promise<void>;
   isInWishlist: (productId: number) => boolean;
   fetchProductLikes: () => Promise<void>;
-  state: { items: number[] }; // Add this for backward compatibility
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
@@ -35,21 +34,49 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
   const { user } = useAuth();
 
   const fetchProductLikes = async () => {
-    // For now, we'll work with mock data until the product_likes table is created
-    console.log('Fetching product likes - table will be available after SQL migration');
-    
-    if (user) {
-      // Mock some wishlist items from localStorage for now
-      const savedWishlist = localStorage.getItem(`wishlist_${user.id}`);
-      if (savedWishlist) {
-        const items = JSON.parse(savedWishlist);
-        setWishlistItems(items);
-        const userLikeMap: { [productId: number]: boolean } = {};
-        items.forEach((id: number) => {
-          userLikeMap[id] = true;
-        });
-        setUserLikes(userLikeMap);
+    try {
+      // Fetch all product likes to get counts
+      const { data: allLikes, error: likesError } = await supabase
+        .from('product_likes')
+        .select('product_id');
+
+      if (likesError) {
+        console.error('Error fetching product likes:', likesError);
+        return;
       }
+
+      // Count likes per product
+      const likeCounts: { [productId: number]: number } = {};
+      allLikes.forEach((like) => {
+        likeCounts[like.product_id] = (likeCounts[like.product_id] || 0) + 1;
+      });
+      setProductLikes(likeCounts);
+
+      if (user) {
+        // Fetch user's specific likes
+        const { data: userLikesData, error: userLikesError } = await supabase
+          .from('product_likes')
+          .select('product_id')
+          .eq('user_id', user.id);
+
+        if (userLikesError) {
+          console.error('Error fetching user likes:', userLikesError);
+          return;
+        }
+
+        const userLikeMap: { [productId: number]: boolean } = {};
+        const wishlistItemIds: number[] = [];
+        
+        userLikesData.forEach((like) => {
+          userLikeMap[like.product_id] = true;
+          wishlistItemIds.push(like.product_id);
+        });
+        
+        setUserLikes(userLikeMap);
+        setWishlistItems(wishlistItemIds);
+      }
+    } catch (error) {
+      console.error('Error in fetchProductLikes:', error);
     }
   };
 
@@ -72,28 +99,45 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
 
       if (isCurrentlyLiked) {
         // Remove like
+        const { error } = await supabase
+          .from('product_likes')
+          .delete()
+          .eq('product_id', productId)
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error removing like:', error);
+          throw error;
+        }
+
+        // Update local state
         setUserLikes(prev => ({ ...prev, [productId]: false }));
         setProductLikes(prev => ({ 
           ...prev, 
           [productId]: Math.max(0, (prev[productId] || 1) - 1) 
         }));
         setWishlistItems(prev => prev.filter(id => id !== productId));
-        
-        // Save to localStorage for now
-        const newItems = wishlistItems.filter(id => id !== productId);
-        localStorage.setItem(`wishlist_${user.id}`, JSON.stringify(newItems));
       } else {
         // Add like
+        const { error } = await supabase
+          .from('product_likes')
+          .insert({
+            product_id: productId,
+            user_id: user.id
+          });
+
+        if (error) {
+          console.error('Error adding like:', error);
+          throw error;
+        }
+
+        // Update local state
         setUserLikes(prev => ({ ...prev, [productId]: true }));
         setProductLikes(prev => ({ 
           ...prev, 
           [productId]: (prev[productId] || 0) + 1 
         }));
         setWishlistItems(prev => [...prev, productId]);
-        
-        // Save to localStorage for now
-        const newItems = [...wishlistItems, productId];
-        localStorage.setItem(`wishlist_${user.id}`, JSON.stringify(newItems));
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
@@ -116,8 +160,7 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
       userLikes,
       toggleWishlist,
       isInWishlist,
-      fetchProductLikes,
-      state: { items: wishlistItems } // Add this for backward compatibility
+      fetchProductLikes
     }}>
       {children}
     </WishlistContext.Provider>
