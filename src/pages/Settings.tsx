@@ -52,9 +52,11 @@ const Settings = () => {
             <CardContent>
               <Button 
                 onClick={handleAdminLogin}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                className="w-full border-blue-200 text-blue-700 hover:bg-blue-50"
+                variant="outline"
+                disabled
               >
-                Login as Admin
+                Coming Soon
               </Button>
             </CardContent>
           </Card>
