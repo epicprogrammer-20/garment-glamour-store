@@ -10,6 +10,9 @@ interface Product {
   price: number;
   image: string;
   category: string;
+  originalPrice?: number;
+  discountPercentage?: number;
+  isOnSale?: boolean;
 }
 
 interface ProductCardProps {
@@ -59,11 +62,25 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             {likeCount} ❤️
           </div>
         )}
+        {product.isOnSale && product.discountPercentage && (
+          <div className="absolute bottom-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+            {product.discountPercentage}% OFF
+          </div>
+        )}
       </div>
       <div className="mt-4">
         <h3 className="text-lg font-medium text-gray-900">{product.name}</h3>
         <p className="text-gray-600 capitalize">{product.category}</p>
-        <p className="text-xl font-bold text-gray-900 mt-1">${product.price}</p>
+        <div className="mt-1">
+          {product.isOnSale && product.originalPrice ? (
+            <div className="flex items-center space-x-2">
+              <p className="text-xl font-bold text-red-600">${product.price}</p>
+              <p className="text-lg text-gray-500 line-through">${product.originalPrice}</p>
+            </div>
+          ) : (
+            <p className="text-xl font-bold text-gray-900">${product.price}</p>
+          )}
+        </div>
       </div>
     </div>
   );

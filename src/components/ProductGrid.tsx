@@ -26,12 +26,39 @@ export const ProductGrid = ({ category }: ProductGridProps) => {
 
   const fetchProducts = async () => {
     try {
-      const { data } = await supabase
+      // First, fetch all products
+      const { data: productsData } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
       
-      setProducts(data || []);
+      // Then, fetch sale products
+      const { data: saleProductsData } = await supabase
+        .from('sale_products')
+        .select('*')
+        .eq('is_active', true);
+
+      // Merge the data to show sale prices
+      const mergedProducts = (productsData || []).map(product => {
+        const saleProduct = saleProductsData?.find(sp => sp.product_id === product.id);
+        
+        if (saleProduct) {
+          return {
+            ...product,
+            originalPrice: saleProduct.original_price,
+            price: saleProduct.sale_price,
+            discountPercentage: saleProduct.discount_percentage,
+            isOnSale: true
+          };
+        }
+        
+        return {
+          ...product,
+          isOnSale: false
+        };
+      });
+      
+      setProducts(mergedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
