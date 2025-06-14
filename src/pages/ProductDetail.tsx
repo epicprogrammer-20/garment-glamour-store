@@ -19,6 +19,9 @@ interface Product {
   category: string;
   sizes: string[];
   description?: string;
+  originalPrice?: number;
+  discountPercentage?: number;
+  isOnSale?: boolean;
 }
 
 const ProductDetail = () => {
@@ -37,7 +40,8 @@ const ProductDetail = () => {
       if (!id) return;
       
       try {
-        const { data, error } = await supabase
+        // Fetch the product
+        const { data: productData, error } = await supabase
           .from('products')
           .select('*')
           .eq('id', parseInt(id))
@@ -49,7 +53,29 @@ const ProductDetail = () => {
           return;
         }
 
-        setProduct(data);
+        // Check if this product is on sale
+        const { data: saleData } = await supabase
+          .from('sale_products')
+          .select('*')
+          .eq('product_id', parseInt(id))
+          .eq('is_active', true)
+          .single();
+
+        // Merge product with sale data if available
+        if (saleData) {
+          setProduct({
+            ...productData,
+            originalPrice: saleData.original_price,
+            price: saleData.sale_price,
+            discountPercentage: saleData.discount_percentage,
+            isOnSale: true
+          });
+        } else {
+          setProduct({
+            ...productData,
+            isOnSale: false
+          });
+        }
       } catch (error) {
         console.error('Error:', error);
         navigate('/');
@@ -99,7 +125,7 @@ const ProductDetail = () => {
       payload: {
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: product.price, // This now uses the sale price if on sale
         image: product.image,
         category: product.category,
         size: selectedSize || 'One Size'
@@ -144,7 +170,21 @@ const ProductDetail = () => {
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
-              <p className="text-2xl font-semibold text-gray-900 mt-2">${product.price}</p>
+              <div className="mt-2">
+                {product.isOnSale && product.originalPrice ? (
+                  <div className="flex items-center space-x-3">
+                    <p className="text-3xl font-bold text-red-600">${product.price}</p>
+                    <p className="text-2xl text-gray-500 line-through">${product.originalPrice}</p>
+                    {product.discountPercentage && (
+                      <span className="bg-red-600 text-white px-2 py-1 rounded-full text-sm font-bold">
+                        {product.discountPercentage}% OFF
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-gray-900">${product.price}</p>
+                )}
+              </div>
               <div className="flex items-center mt-2">
                 <div className="flex text-yellow-400">
                   {[...Array(5)].map((_, i) => (
