@@ -56,7 +56,7 @@ const Settings = () => {
                 variant="outline"
                 disabled
               >
-                Coming Soon
+                Unavailable
               </Button>
             </CardContent>
           </Card>
