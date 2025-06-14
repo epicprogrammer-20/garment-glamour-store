@@ -1,13 +1,50 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { products } from '../data/products';
 import { useSearch } from '../contexts/SearchContext';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+}
 
 export const SearchDialog = () => {
   const { searchQuery, setSearchQuery, isSearchOpen, setIsSearchOpen } = useSearch();
   const [localQuery, setLocalQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isSearchOpen) {
+      fetchProducts();
+    }
+  }, [isSearchOpen]);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching products:', error);
+        return;
+      }
+
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(localQuery.toLowerCase()) ||
@@ -43,7 +80,9 @@ export const SearchDialog = () => {
         </div>
         
         <div className="max-h-96 overflow-y-auto">
-          {localQuery && (
+          {loading ? (
+            <div className="p-4 text-center text-gray-500">Loading products...</div>
+          ) : localQuery ? (
             <div className="p-4">
               <h3 className="font-semibold mb-3">Search Results</h3>
               {filteredProducts.length > 0 ? (
@@ -70,6 +109,10 @@ export const SearchDialog = () => {
               ) : (
                 <p className="text-gray-500">No products found</p>
               )}
+            </div>
+          ) : (
+            <div className="p-4 text-center text-gray-500">
+              Start typing to search products...
             </div>
           )}
         </div>
