@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { X, Plus, Minus } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
@@ -9,7 +9,11 @@ import { LocationPopup } from './LocationPopup';
 export const Cart = () => {
   const { state, dispatch } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showLocationPopup, setShowLocationPopup] = useState(false);
+
+  // Hide cart on checkout page
+  const isCheckoutPage = location.pathname === '/checkout';
 
   const updateQuantity = (id: number, size: string, quantity: number) => {
     if (quantity <= 0) {
@@ -38,6 +42,11 @@ export const Cart = () => {
       navigate('/delivery-restriction');
     }
   };
+
+  // Don't render cart on checkout page
+  if (isCheckoutPage) {
+    return null;
+  }
 
   return (
     <>

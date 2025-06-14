@@ -52,7 +52,7 @@ const Checkout = () => {
 
   const redirectToWhatsApp = () => {
     const whatsappNumber = '+263123456789'; // Replace with your actual WhatsApp number
-    const message = `Hello! I have placed an order on your website. Order details: ${state.items.map(item => `${item.name} (${item.size}) x${item.quantity}`).join(', ')}. Total: $${(total + 10 + (total * 0.08)).toFixed(2)}. Payment method: ${formData.paymentMethod}`;
+    const message = `Hello! I have placed an order on your website. Order details: ${state.items.map(item => `${item.name} (${item.size}) x${item.quantity}`).join(', ')}. Total: $${total.toFixed(2)}. Payment method: ${formData.paymentMethod}`;
     const whatsappUrl = `https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -85,6 +85,8 @@ const Checkout = () => {
   };
 
   const total = state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const shipping = 0; // Set shipping to 0
+  const tax = 0; // Set tax to 0
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -339,7 +341,7 @@ const Checkout = () => {
                 type="submit"
                 className="w-full bg-blue-600 text-white py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
               >
-                Complete Order - ${(total + 10 + (total * 0.08)).toFixed(2)}
+                Complete Order - ${(total + shipping + tax).toFixed(2)}
               </button>
             </form>
 
@@ -396,15 +398,15 @@ const Checkout = () => {
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
-                <span>$10.00</span>
+                <span>${shipping.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tax</span>
-                <span>${(total * 0.08).toFixed(2)}</span>
+                <span>${tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total</span>
-                <span>${(total + 10 + (total * 0.08)).toFixed(2)}</span>
+                <span>${(total + shipping + tax).toFixed(2)}</span>
               </div>
             </div>
           </div>

@@ -7,6 +7,7 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { ProductComments } from '@/components/ProductComments';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -231,6 +232,9 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Comments Section */}
+        <ProductComments productId={product.id} />
       </div>
 
       <Footer />

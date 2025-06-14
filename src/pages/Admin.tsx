@@ -64,60 +64,11 @@ const Admin = () => {
   useEffect(() => {
     if (isAuthenticated) {
       const initData = async () => {
-        await Promise.all([fetchProducts(), fetchVideos(), fetchSaleProducts(), fetchGalleryImages(), createSampleData()]);
+        await Promise.all([fetchProducts(), fetchVideos(), fetchSaleProducts(), fetchGalleryImages()]);
       };
       initData();
     }
   }, [isAuthenticated]);
-
-  const createSampleData = async () => {
-    try {
-      const { data: existingProducts } = await supabase
-        .from('products')
-        .select('name')
-        .in('name', ['Men\'s Classic T-Shirt']);
-
-      if (existingProducts && existingProducts.length === 0) {
-        const { data: sampleProduct, error: insertError } = await supabase
-          .from('products')
-          .insert({
-            name: 'Men\'s Classic T-Shirt',
-            price: 49.99,
-            image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=600&fit=crop',
-            category: 'men',
-            sizes: ['S', 'M', 'L', 'XL'],
-            description: 'A comfortable classic t-shirt perfect for everyday wear.',
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error('Error creating sample product:', insertError);
-        } else if (sampleProduct) {
-          const { error: saleError } = await supabase
-            .from('sale_products')
-            .insert({
-              product_id: sampleProduct.id,
-              original_price: 49.99,
-              sale_price: 29.99,
-              discount_percentage: 40,
-              is_active: true,
-            });
-
-          if (saleError) {
-            console.error('Error creating sale entry:', saleError);
-          }
-
-          toast({
-            title: "Sample Data Created",
-            description: "Sample men's product has been added for testing.",
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error creating sample data:', error);
-    }
-  };
 
   const fetchProducts = async () => {
     try {
