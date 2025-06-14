@@ -16,25 +16,44 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
   const [newVideo, setNewVideo] = useState({
     title: '',
     url: '',
+    videoFile: null as File | null,
     description: '',
   });
 
   const handleAddVideo = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newVideo.title || !newVideo.url) {
+    if (!newVideo.title || (!newVideo.url && !newVideo.videoFile)) {
       toast({
         title: "Error", 
-        description: "Please fill in all required fields",
+        description: "Please fill in title and provide either a URL or upload a video file",
         variant: "destructive",
       });
       return;
     }
 
     try {
+      let videoUrl = newVideo.url;
+
+      if (newVideo.videoFile) {
+        const fileExt = newVideo.videoFile.name.split('.').pop();
+        const filePath = `videos/${Date.now()}.${fileExt}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('products')
+          .upload(filePath, newVideo.videoFile);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw uploadError;
+        }
+
+        videoUrl = supabase.storage.from('products').getPublicUrl(filePath).data.publicUrl;
+      }
+
       const { error } = await supabase.from('videos').insert({
         title: newVideo.title,
-        url: newVideo.url,
+        url: videoUrl,
         description: newVideo.description,
         is_active: true,
       });
@@ -44,6 +63,7 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
       setNewVideo({
         title: '',
         url: '',
+        videoFile: null,
         description: '',
       });
 
@@ -79,13 +99,29 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
           />
         </div>
         <div>
-          <Label htmlFor="video-url">Video URL *</Label>
+          <Label htmlFor="video-url">Video URL</Label>
           <Input
             id="video-url"
             value={newVideo.url}
             onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
             placeholder="Enter video URL"
-            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="video-file">Or Upload Video File</Label>
+          <Input
+            id="video-file"
+            type="file"
+            accept="video/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setNewVideo((prev) => ({
+                  ...prev,
+                  videoFile: file,
+                }));
+              }
+            }}
           />
         </div>
         <div className="md:col-span-2">

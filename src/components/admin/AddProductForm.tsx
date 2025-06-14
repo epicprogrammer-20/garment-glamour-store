@@ -172,6 +172,7 @@ export const AddProductForm = ({ onProductAdded }: AddProductFormProps) => {
             <option value="women">Women</option>
             <option value="men">Men</option>
             <option value="accessories">Accessories</option>
+            <option value="all">All Categories</option>
           </select>
         </div>
         <div>

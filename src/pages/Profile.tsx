@@ -4,13 +4,17 @@ import { Footer } from '../components/Footer';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserData } from '../hooks/useUserData';
 import { useWishlist } from '../contexts/WishlistContext';
-import { User, Mail, Lock, Edit, Heart, ShoppingBag, Star } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { User, Mail, Lock, Edit, Heart, ShoppingBag, Star, Save } from 'lucide-react';
 
 const Profile = () => {
   const { user, signIn, signUp, signOut } = useAuth();
-  const { profile, orderCount, reviewCount, loading } = useUserData();
-  const { wishlistItems } = useWishlist(); // Use wishlistItems directly instead of state
+  const { profile, orderCount, reviewCount, loading, refetch } = useUserData();
+  const { wishlistItems } = useWishlist();
   const [isLogin, setIsLogin] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -56,6 +60,49 @@ const Profile = () => {
     });
   };
 
+  const handleEditProfile = () => {
+    setIsEditing(true);
+    setEditedName(profile?.name || '');
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user || !editedName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name: editedName.trim() })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      await refetch();
+      setIsEditing(false);
+      toast({
+        title: "Success",
+        description: "Profile updated successfully!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to update profile: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedName(profile?.name || '');
+  };
+
   if (user && profile) {
     return (
       <div className="min-h-screen bg-white">
@@ -67,13 +114,18 @@ const Profile = () => {
               <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
                 <User size={32} className="text-gray-600" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{profile.name}</h1>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-gray-900">Hello, {profile.name}!</h1>
                 <p className="text-gray-600">{profile.email}</p>
               </div>
-              <button className="ml-auto p-2 text-gray-600 hover:text-black">
-                <Edit size={20} />
-              </button>
+              {!isEditing && (
+                <button 
+                  onClick={handleEditProfile}
+                  className="p-2 text-gray-600 hover:text-black"
+                >
+                  <Edit size={20} />
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -100,12 +152,36 @@ const Profile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      value={profile.name}
-                      className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
-                      readOnly
-                    />
+                    {isEditing ? (
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={editedName}
+                          onChange={(e) => setEditedName(e.target.value)}
+                          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                          placeholder="Enter your full name"
+                        />
+                        <button
+                          onClick={handleSaveProfile}
+                          className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          <Save size={16} />
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-4 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        value={profile.name}
+                        className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
+                        readOnly
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -126,9 +202,14 @@ const Profile = () => {
                 >
                   Logout
                 </button>
-                <button className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors">
-                  Edit Profile
-                </button>
+                {!isEditing && (
+                  <button 
+                    onClick={handleEditProfile}
+                    className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    Edit Profile
+                  </button>
+                )}
               </div>
             </div>
           </div>
