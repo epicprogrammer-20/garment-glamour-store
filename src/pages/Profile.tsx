@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -62,7 +63,7 @@ const Profile = () => {
 
   const handleEditProfile = () => {
     setIsEditing(true);
-    setEditedName(profile?.name || '');
+    setEditedName(profile?.first_name || '');
   };
 
   const handleSaveProfile = async () => {
@@ -78,7 +79,7 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ name: editedName.trim() })
+        .update({ first_name: editedName.trim() })
         .eq('id', user.id);
 
       if (error) throw error;
@@ -100,7 +101,7 @@ const Profile = () => {
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setEditedName(profile?.name || '');
+    setEditedName(profile?.first_name || '');
   };
 
   if (user && profile) {
@@ -115,7 +116,7 @@ const Profile = () => {
                 <User size={32} className="text-gray-600" />
               </div>
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900">Hello, {profile.name}!</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Hello, {profile.first_name}!</h1>
                 <p className="text-gray-600">{profile.email}</p>
               </div>
               {!isEditing && (
@@ -177,7 +178,7 @@ const Profile = () => {
                     ) : (
                       <input
                         type="text"
-                        value={profile.name}
+                        value={profile.first_name || ''}
                         className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
                         readOnly
                       />
