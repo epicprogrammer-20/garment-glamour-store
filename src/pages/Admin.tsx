@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -49,10 +48,8 @@ const Admin = () => {
   });
 
   useEffect(() => {
-    const authStatus = localStorage.getItem('adminAuthenticated');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-    }
+    // Always require authentication - remove localStorage check
+    setIsAuthenticated(false);
     setLoading(false);
   }, []);
 
