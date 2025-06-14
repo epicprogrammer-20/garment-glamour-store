@@ -1,37 +1,44 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Upload } from 'lucide-react';
 
 export const ImageGallery = () => {
-  const galleryImages = [
-    {
-      id: 1,
-      src: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=800&h=600&fit=crop',
-      alt: 'Fashion Collection 1',
-      title: 'Summer Collection',
-      description: 'Elegant styles for the season'
-    },
-    {
-      id: 2,
-      src: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop',
-      alt: 'Fashion Collection 2',
-      title: 'Urban Chic',
-      description: 'Modern streetwear essentials'
-    },
-    {
-      id: 3,
-      src: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&h=600&fit=crop',
-      alt: 'Fashion Collection 3',
-      title: 'Classic Elegance',
-      description: 'Timeless pieces for every occasion'
-    },
-    {
-      id: 4,
-      src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&h=600&fit=crop',
-      alt: 'Fashion Collection 4',
-      title: 'Autumn Vibes',
-      description: 'Cozy and stylish autumn wear'
-    }
-  ];
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
+
+  useEffect(() => {
+    // For now, we'll use default images since we don't have a gallery table yet
+    // In a real implementation, you would fetch from Supabase
+    setGalleryImages([
+      {
+        id: 1,
+        src: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=800&h=600&fit=crop',
+        alt: 'Fashion Collection 1',
+        title: 'Summer Collection',
+        description: 'Elegant styles for the season'
+      },
+      {
+        id: 2,
+        src: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop',
+        alt: 'Fashion Collection 2',
+        title: 'Urban Chic',
+        description: 'Modern streetwear essentials'
+      },
+      {
+        id: 3,
+        src: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&h=600&fit=crop',
+        alt: 'Fashion Collection 3',
+        title: 'Classic Elegance',
+        description: 'Timeless pieces for every occasion'
+      },
+      {
+        id: 4,
+        src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&h=600&fit=crop',
+        alt: 'Fashion Collection 4',
+        title: 'Autumn Vibes',
+        description: 'Cozy and stylish autumn wear'
+      }
+    ]);
+  }, []);
 
   return (
     <section className="py-16 bg-white">
@@ -41,6 +48,13 @@ export const ImageGallery = () => {
           <p className="text-gray-600 max-w-2xl mx-auto">
             Discover our latest collections through stunning visuals that capture the essence of modern fashion.
           </p>
+          <a 
+            href="/admin" 
+            className="inline-flex items-center mt-4 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            <Upload size={16} className="mr-2" />
+            Upload Image
+          </a>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

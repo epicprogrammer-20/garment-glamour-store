@@ -1,19 +1,53 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Star, ArrowLeft } from 'lucide-react';
-import { products } from '../data/products';
 import { useCart } from '../contexts/CartContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = products.find(p => p.id === Number(id));
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState('');
   const [isLiked, setIsLiked] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const { dispatch } = useCart();
+
+  useEffect(() => {
+    if (id) {
+      fetchProduct();
+    }
+  }, [id]);
+
+  const fetchProduct = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      setProduct(data);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p>Loading product...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -116,7 +150,7 @@ const ProductDetail = () => {
             <div>
               <h3 className="text-lg font-semibold mb-3">Size</h3>
               <div className="grid grid-cols-4 gap-2">
-                {product.sizes.map((size) => (
+                {product.sizes && product.sizes.map((size: string) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
@@ -151,10 +185,7 @@ const ProductDetail = () => {
             <div>
               <h3 className="text-lg font-semibold mb-3">Description</h3>
               <p className="text-gray-600 leading-relaxed">
-                Experience premium quality with this carefully crafted piece. Made from the finest materials 
-                and designed with attention to detail, this item combines style and comfort perfectly. 
-                The versatile design makes it suitable for various occasions, while the durable construction 
-                ensures long-lasting wear.
+                {product.description || 'Experience premium quality with this carefully crafted piece. Made from the finest materials and designed with attention to detail, this item combines style and comfort perfectly. The versatile design makes it suitable for various occasions, while the durable construction ensures long-lasting wear.'}
               </p>
             </div>
           </div>
