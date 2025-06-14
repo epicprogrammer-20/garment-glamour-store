@@ -23,8 +23,8 @@ interface Product {
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const { toggleWishlistItem, isInWishlist } = useWishlist();
+  const { dispatch } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>('');
@@ -93,13 +93,16 @@ const ProductDetail = () => {
       return;
     }
 
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      size: selectedSize,
-      quantity,
+    dispatch({ 
+      type: 'ADD_ITEM', 
+      payload: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        size: selectedSize || 'One Size'
+      }
     });
 
     toast({
@@ -109,14 +112,7 @@ const ProductDetail = () => {
   };
 
   const handleToggleWishlist = () => {
-    toggleWishlistItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      category: product.category,
-      sizes: product.sizes,
-    });
+    toggleWishlist(product.id);
   };
 
   return (
