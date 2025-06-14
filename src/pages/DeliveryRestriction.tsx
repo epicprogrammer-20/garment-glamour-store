@@ -4,17 +4,33 @@ import { Header } from '../components/Header';
 import { SecondaryNavbar } from '../components/SecondaryNavbar';
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
-import { MapPin, MessageCircle, Calendar, Bell } from 'lucide-react';
+import { MapPin, MessageCircle, Calendar, Bell, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const DeliveryRestriction = () => {
+  const navigate = useNavigate();
   const whatsappNumber = "+1234567890";
   const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi, I would like to place a special order for delivery to my location.`;
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
 
   return (
     <div className="min-h-screen bg-white">
       <SecondaryNavbar />
       <Header />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <Button 
+          variant="outline" 
+          onClick={handleGoBack}
+          className="mb-6 hover:bg-blue-50 border-blue-200 text-blue-700"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Go Back
+        </Button>
+
         <div className="text-center mb-12">
           <MapPin className="mx-auto text-orange-500 mb-6" size={64} />
           <h1 className="text-4xl font-bold text-gray-900 mb-4">

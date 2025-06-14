@@ -4,15 +4,22 @@ import { Header } from '../components/Header';
 import { SecondaryNavbar } from '../components/SecondaryNavbar';
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
-import { MapPin, Phone, Mail, Send } from 'lucide-react';
+import { MapPin, Phone, Mail, Send, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const Contact = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
     message: ''
   });
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +39,15 @@ const Contact = () => {
       <SecondaryNavbar />
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <Button 
+          variant="outline" 
+          onClick={handleGoBack}
+          className="mb-6 hover:bg-blue-50 border-blue-200 text-blue-700"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Go Back
+        </Button>
+
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">

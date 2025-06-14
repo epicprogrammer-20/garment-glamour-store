@@ -4,14 +4,31 @@ import { Header } from '../components/Header';
 import { SecondaryNavbar } from '../components/SecondaryNavbar';
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
-import { Phone, Mail, Clock, MessageCircle } from 'lucide-react';
+import { Phone, Mail, Clock, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const CustomerService = () => {
+  const navigate = useNavigate();
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <SecondaryNavbar />
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <Button 
+          variant="outline" 
+          onClick={handleGoBack}
+          className="mb-6 hover:bg-blue-50 border-blue-200 text-blue-700"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Go Back
+        </Button>
+
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Customer Service</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
