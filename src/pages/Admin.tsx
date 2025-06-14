@@ -163,7 +163,13 @@ const Admin = () => {
 
   const fetchGalleryImages = async () => {
     try {
-      setGalleryImages([]);
+      const { data, error } = await supabase
+        .from('gallery_images')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setGalleryImages(data || []);
     } catch (error) {
       console.error('Error fetching gallery images:', error);
     }
@@ -244,11 +250,30 @@ const Admin = () => {
   };
 
   const handleImageAdded = (image: GalleryImage) => {
-    setGalleryImages(prev => [...prev, image]);
+    setGalleryImages(prev => [image, ...prev]);
   };
 
-  const handleDeleteImage = (id: string) => {
-    setGalleryImages(prev => prev.filter(img => img.id !== id));
+  const handleDeleteImage = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('gallery_images')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setGalleryImages(prev => prev.filter(img => img.id !== id));
+      toast({
+        title: "Success",
+        description: "Gallery image deleted successfully!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to delete gallery image: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -274,19 +299,20 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
-          <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Panel</h1>
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
             <Button 
               onClick={() => window.location.href = '/'} 
               variant="outline"
+              className="w-full sm:w-auto"
             >
               <Home className="mr-2" size={16} />
               Back to Home
             </Button>
-            <Button onClick={handleLogout} variant="outline">
+            <Button onClick={handleLogout} variant="outline" className="w-full sm:w-auto">
               <LogOut className="mr-2" size={16} />
               Logout
             </Button>

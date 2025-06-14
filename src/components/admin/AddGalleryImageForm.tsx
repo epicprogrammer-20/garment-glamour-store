@@ -58,14 +58,19 @@ export const AddGalleryImageForm = ({ onImageAdded }: AddGalleryImageFormProps) 
         imageUrl = supabase.storage.from('products').getPublicUrl(filePath).data.publicUrl;
       }
 
-      const newImage = {
-        id: Date.now().toString(),
-        title: newGalleryImage.title,
-        url: imageUrl,
-        description: newGalleryImage.description,
-      };
+      const { data, error } = await supabase
+        .from('gallery_images')
+        .insert({
+          title: newGalleryImage.title,
+          url: imageUrl,
+          description: newGalleryImage.description,
+        })
+        .select()
+        .single();
 
-      onImageAdded(newImage);
+      if (error) throw error;
+
+      onImageAdded(data);
 
       setNewGalleryImage({
         title: '',
@@ -88,12 +93,12 @@ export const AddGalleryImageForm = ({ onImageAdded }: AddGalleryImageFormProps) 
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-8">
-      <h2 className="text-xl font-semibold mb-4 flex items-center">
+    <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-8">
+      <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
         <Image className="mr-2" size={20} />
         Add Gallery Image
       </h2>
-      <form onSubmit={handleAddGalleryImage} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleAddGalleryImage} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="gallery-title">Image Title *</Label>
           <Input
@@ -140,7 +145,7 @@ export const AddGalleryImageForm = ({ onImageAdded }: AddGalleryImageFormProps) 
             rows={2}
           />
         </div>
-        <div className="md:col-span-2">
+        <div className="lg:col-span-2">
           <Button type="submit" className="w-full">
             Add Gallery Image
           </Button>

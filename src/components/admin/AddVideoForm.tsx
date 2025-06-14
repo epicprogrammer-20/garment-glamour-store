@@ -17,6 +17,7 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
     title: '',
     url: '',
     videoFile: null as File | null,
+    thumbnailFile: null as File | null,
     description: '',
   });
 
@@ -34,6 +35,7 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
 
     try {
       let videoUrl = newVideo.url;
+      let thumbnailUrl = '';
 
       if (newVideo.videoFile) {
         const fileExt = newVideo.videoFile.name.split('.').pop();
@@ -51,9 +53,26 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
         videoUrl = supabase.storage.from('products').getPublicUrl(filePath).data.publicUrl;
       }
 
+      if (newVideo.thumbnailFile) {
+        const fileExt = newVideo.thumbnailFile.name.split('.').pop();
+        const filePath = `thumbnails/${Date.now()}.${fileExt}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('products')
+          .upload(filePath, newVideo.thumbnailFile);
+
+        if (uploadError) {
+          console.error('Thumbnail upload error:', uploadError);
+          throw uploadError;
+        }
+
+        thumbnailUrl = supabase.storage.from('products').getPublicUrl(filePath).data.publicUrl;
+      }
+
       const { error } = await supabase.from('videos').insert({
         title: newVideo.title,
         url: videoUrl,
+        thumbnail_url: thumbnailUrl,
         description: newVideo.description,
         is_active: true,
       });
@@ -64,6 +83,7 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
         title: '',
         url: '',
         videoFile: null,
+        thumbnailFile: null,
         description: '',
       });
 
@@ -82,12 +102,12 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-8">
-      <h2 className="text-xl font-semibold mb-4 flex items-center">
+    <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-8">
+      <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
         <Plus className="mr-2" size={20} />
         Add New Video
       </h2>
-      <form onSubmit={handleAddVideo} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleAddVideo} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="video-title">Video Title *</Label>
           <Input
@@ -124,7 +144,24 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
             }}
           />
         </div>
-        <div className="md:col-span-2">
+        <div>
+          <Label htmlFor="thumbnail-file">Upload Thumbnail Image</Label>
+          <Input
+            id="thumbnail-file"
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setNewVideo((prev) => ({
+                  ...prev,
+                  thumbnailFile: file,
+                }));
+              }
+            }}
+          />
+        </div>
+        <div className="lg:col-span-2">
           <Label htmlFor="video-description">Description</Label>
           <Textarea
             id="video-description"
@@ -134,7 +171,7 @@ export const AddVideoForm = ({ onVideoAdded }: AddVideoFormProps) => {
             rows={3}
           />
         </div>
-        <div className="md:col-span-2">
+        <div className="lg:col-span-2">
           <Button type="submit" className="w-full">
             Add Video
           </Button>
