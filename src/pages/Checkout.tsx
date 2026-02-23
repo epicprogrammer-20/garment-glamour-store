@@ -10,6 +10,7 @@ import { Label } from '../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { OrderConfirmationPopup } from '../components/OrderConfirmationPopup';
 import { useToast } from '../hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Checkout = () => {
   const { state, dispatch } = useCart();
@@ -69,6 +70,20 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Save order to database
+    try {
+      await supabase.from('orders').insert({
+        total: total,
+        payment_method: formData.paymentMethod,
+        country: formData.country,
+        customer_email: formData.email,
+        customer_name: formData.fullName,
+        status: 'pending',
+      });
+    } catch (err) {
+      console.error('Failed to save order:', err);
+    }
+
     // Show confirmation popup
     setShowConfirmation(true);
     
