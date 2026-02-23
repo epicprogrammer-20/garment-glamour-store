@@ -84,22 +84,34 @@ export type Database = {
       }
       orders: {
         Row: {
+          country: string | null
           created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
           id: string
+          payment_method: string | null
           status: string | null
           total: number
           user_id: string | null
         }
         Insert: {
+          country?: string | null
           created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
           id?: string
+          payment_method?: string | null
           status?: string | null
           total: number
           user_id?: string | null
         }
         Update: {
+          country?: string | null
           created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
           id?: string
+          payment_method?: string | null
           status?: string | null
           total?: number
           user_id?: string | null
@@ -204,6 +216,41 @@ export type Database = {
         }
         Relationships: []
       }
+      refunds: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          order_id: string | null
+          reason: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          reason?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          reason?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
@@ -282,6 +329,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      site_visits: {
+        Row: {
+          country: string | null
+          id: string
+          page: string | null
+          session_id: string | null
+          user_agent: string | null
+          visited_at: string
+        }
+        Insert: {
+          country?: string | null
+          id?: string
+          page?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          visited_at?: string
+        }
+        Update: {
+          country?: string | null
+          id?: string
+          page?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          visited_at?: string
+        }
+        Relationships: []
       }
       videos: {
         Row: {

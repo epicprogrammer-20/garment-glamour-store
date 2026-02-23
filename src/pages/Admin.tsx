@@ -13,6 +13,7 @@ import { ProductsList } from '@/components/admin/ProductsList';
 import { SaleProductsList } from '@/components/admin/SaleProductsList';
 import { VideosList } from '@/components/admin/VideosList';
 import { GalleryImagesList } from '@/components/admin/GalleryImagesList';
+import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 
 interface Product {
   id: number;
@@ -270,6 +271,7 @@ const Admin = () => {
           </div>
         </div>
 
+        <AnalyticsDashboard />
         <AddProductForm onProductAdded={fetchProducts} />
         <AddSaleProductForm products={products} onSaleProductAdded={fetchSaleProducts} />
         <AddVideoForm onVideoAdded={fetchVideos} />

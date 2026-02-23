@@ -9,8 +9,10 @@ import { ProductGrid } from '../components/ProductGrid';
 import { SocialMedia } from '../components/SocialMedia';
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
+import { useVisitTracker } from '../hooks/useVisitTracker';
 
 const Index = () => {
+  useVisitTracker();
   return (
     <div className="min-h-screen bg-white">
       <SecondaryNavbar />
