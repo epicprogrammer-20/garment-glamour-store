@@ -1,11 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { DollarSign, Eye, RotateCcw, Package, TrendingUp, TrendingDown } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { DollarSign, Eye, RotateCcw, Package, TrendingUp, CalendarIcon, Download } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface OrderWithDetails {
   id: string;
@@ -35,42 +40,59 @@ const AnalyticsDashboard = () => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
+  // Date range filter
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  });
+  const [dateTo, setDateTo] = useState<Date | undefined>(new Date());
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
+    setLoading(true);
+    const from = dateFrom?.toISOString();
+    const to = dateTo ? new Date(dateTo.getTime() + 86400000).toISOString() : undefined;
+
     try {
       await Promise.all([
-        fetchSalesData(),
-        fetchVisits(),
-        fetchRefunds(),
+        fetchSalesData(from, to),
+        fetchVisits(from, to),
+        fetchRefunds(from, to),
         fetchProducts(),
-        fetchOrders(),
-        fetchChartData(),
+        fetchOrders(from, to),
+        fetchChartData(from, to),
       ]);
     } finally {
       setLoading(false);
     }
+  }, [dateFrom, dateTo]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  const fetchSalesData = async (from?: string, to?: string) => {
+    let query = supabase.from('orders').select('total');
+    if (from) query = query.gte('created_at', from);
+    if (to) query = query.lte('created_at', to);
+    const { data } = await query;
+    if (data) setTotalSales(data.reduce((sum, o) => sum + Number(o.total), 0));
   };
 
-  const fetchSalesData = async () => {
-    const { data } = await supabase.from('orders').select('total');
-    if (data) {
-      setTotalSales(data.reduce((sum, o) => sum + Number(o.total), 0));
-    }
-  };
-
-  const fetchVisits = async () => {
-    const { count } = await supabase.from('site_visits').select('*', { count: 'exact', head: true });
+  const fetchVisits = async (from?: string, to?: string) => {
+    let query = supabase.from('site_visits').select('*', { count: 'exact', head: true });
+    if (from) query = query.gte('visited_at', from);
+    if (to) query = query.lte('visited_at', to);
+    const { count } = await query;
     setTotalVisits(count || 0);
   };
 
-  const fetchRefunds = async () => {
-    const { data } = await supabase.from('refunds').select('amount');
-    if (data) {
-      setTotalRefunds(data.reduce((sum, r) => sum + Number(r.amount), 0));
-    }
+  const fetchRefunds = async (from?: string, to?: string) => {
+    let query = supabase.from('refunds').select('amount');
+    if (from) query = query.gte('created_at', from);
+    if (to) query = query.lte('created_at', to);
+    const { data } = await query;
+    if (data) setTotalRefunds(data.reduce((sum, r) => sum + Number(r.amount), 0));
   };
 
   const fetchProducts = async () => {
@@ -81,25 +103,30 @@ const AnalyticsDashboard = () => {
     }
   };
 
-  const fetchOrders = async () => {
-    const { data } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (data) {
-      setOrders(data as OrderWithDetails[]);
-    }
+  const fetchOrders = async (from?: string, to?: string) => {
+    let query = supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(50);
+    if (from) query = query.gte('created_at', from);
+    if (to) query = query.lte('created_at', to);
+    const { data } = await query;
+    if (data) setOrders(data as OrderWithDetails[]);
   };
 
-  const fetchChartData = async () => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const fetchChartData = async (from?: string, to?: string) => {
+    const defaultFrom = new Date();
+    defaultFrom.setDate(defaultFrom.getDate() - 30);
 
-    const [ordersRes, refundsRes] = await Promise.all([
-      supabase.from('orders').select('total, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
-      supabase.from('refunds').select('amount, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
-    ]);
+    let ordersQuery = supabase.from('orders').select('total, created_at');
+    let refundsQuery = supabase.from('refunds').select('amount, created_at');
+
+    const startDate = from || defaultFrom.toISOString();
+    ordersQuery = ordersQuery.gte('created_at', startDate);
+    refundsQuery = refundsQuery.gte('created_at', startDate);
+    if (to) {
+      ordersQuery = ordersQuery.lte('created_at', to);
+      refundsQuery = refundsQuery.lte('created_at', to);
+    }
+
+    const [ordersRes, refundsRes] = await Promise.all([ordersQuery, refundsQuery]);
 
     const salesByDate: Record<string, number> = {};
     const refundsByDate: Record<string, number> = {};
@@ -127,6 +154,40 @@ const AnalyticsDashboard = () => {
     setChartData(chart);
   };
 
+  // CSV Export
+  const exportOrdersCSV = () => {
+    if (!orders.length) return;
+    const headers = ['Customer', 'Email', 'Amount', 'Payment Method', 'Country', 'Status', 'Date'];
+    const rows = orders.map((o) => [
+      o.customer_name || 'N/A',
+      o.customer_email || 'N/A',
+      Number(o.total).toFixed(2),
+      o.payment_method || 'N/A',
+      o.country || 'N/A',
+      o.status || 'pending',
+      o.created_at ? new Date(o.created_at).toLocaleDateString() : 'N/A',
+    ]);
+    downloadCSV([headers, ...rows], 'orders-export.csv');
+  };
+
+  const exportSalesCSV = () => {
+    if (!chartData.length) return;
+    const headers = ['Date', 'Sales', 'Refunds', 'Profit'];
+    const rows = chartData.map((d) => [d.date, d.sales.toFixed(2), d.refunds.toFixed(2), d.profit.toFixed(2)]);
+    downloadCSV([headers, ...rows], 'sales-export.csv');
+  };
+
+  const downloadCSV = (data: (string | number)[][], filename: string) => {
+    const csv = data.map((row) => row.map((v) => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const chartConfig = {
     sales: { label: 'Sales', color: '#22c55e' },
     refunds: { label: 'Refunds', color: '#ef4444' },
@@ -139,7 +200,38 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="space-y-6 mb-8">
-      <h2 className="text-2xl font-bold text-gray-900">📊 Analytics Dashboard</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold text-gray-900">📊 Analytics Dashboard</h2>
+
+        {/* Date Range Filter */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-[150px] justify-start text-left text-sm", !dateFrom && "text-muted-foreground")}>
+                <CalendarIcon className="mr-1 h-4 w-4" />
+                {dateFrom ? format(dateFrom, 'MMM d, yyyy') : 'From'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className={cn("p-3 pointer-events-auto")} />
+            </PopoverContent>
+          </Popover>
+
+          <span className="text-sm text-gray-500">to</span>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-[150px] justify-start text-left text-sm", !dateTo && "text-muted-foreground")}>
+                <CalendarIcon className="mr-1 h-4 w-4" />
+                {dateTo ? format(dateTo, 'MMM d, yyyy') : 'To'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className={cn("p-3 pointer-events-auto")} />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -152,7 +244,6 @@ const AnalyticsDashboard = () => {
             <DollarSign className="text-green-600" size={32} />
           </div>
         </Card>
-
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -162,7 +253,6 @@ const AnalyticsDashboard = () => {
             <Eye className="text-blue-600" size={32} />
           </div>
         </Card>
-
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -172,7 +262,6 @@ const AnalyticsDashboard = () => {
             <RotateCcw className="text-red-600" size={32} />
           </div>
         </Card>
-
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -186,9 +275,14 @@ const AnalyticsDashboard = () => {
 
       {/* Profit/Loss Chart */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <TrendingUp size={20} /> Profit & Loss (Last 30 Days)
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <TrendingUp size={20} /> Profit & Loss
+          </h3>
+          <Button variant="outline" size="sm" onClick={exportSalesCSV} disabled={!chartData.length}>
+            <Download className="mr-1 h-4 w-4" /> Export Sales CSV
+          </Button>
+        </div>
         {chartData.length > 0 ? (
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <LineChart data={chartData}>
@@ -202,13 +296,18 @@ const AnalyticsDashboard = () => {
             </LineChart>
           </ChartContainer>
         ) : (
-          <p className="text-gray-500 text-center py-8">No data available yet. Sales data will appear here.</p>
+          <p className="text-gray-500 text-center py-8">No data available for the selected date range.</p>
         )}
       </Card>
 
       {/* Orders Table */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">🛒 Recent Orders</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">🛒 Recent Orders</h3>
+          <Button variant="outline" size="sm" onClick={exportOrdersCSV} disabled={!orders.length}>
+            <Download className="mr-1 h-4 w-4" /> Export Orders CSV
+          </Button>
+        </div>
         {orders.length > 0 ? (
           <div className="overflow-x-auto">
             <Table>
@@ -253,7 +352,7 @@ const AnalyticsDashboard = () => {
             </Table>
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No orders yet.</p>
+          <p className="text-gray-500 text-center py-4">No orders for the selected date range.</p>
         )}
       </Card>
     </div>
