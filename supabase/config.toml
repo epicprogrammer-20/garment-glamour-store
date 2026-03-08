@@ -1,1 +1,10 @@
 project_id = "htppstmurohrfvoyviat"
+
+[functions.send-delivery-email]
+verify_jwt = false
+
+[functions.send-order-confirmation]
+verify_jwt = false
+
+[functions.send-refund-status-email]
+verify_jwt = false
