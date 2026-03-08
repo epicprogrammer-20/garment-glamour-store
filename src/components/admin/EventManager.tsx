@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { Sparkles, Trash2, Plus, Save, Users } from 'lucide-react';
+import { Sparkles, Trash2, Plus, Save, Users, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -21,6 +22,15 @@ interface Event {
   competition_title: string;
   competition_description: string;
   competition_prize: string;
+}
+
+interface EventEntry {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  created_at: string | null;
+  event_id: string;
 }
 
 const emptyEvent = {
@@ -37,6 +47,8 @@ const EventManager = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<FileList | null>(null);
   const [entryCounts, setEntryCounts] = useState<Record<string, number>>({});
+  const [expandedEntries, setExpandedEntries] = useState<string | null>(null);
+  const [entries, setEntries] = useState<EventEntry[]>([]);
 
   const fetchEvents = async () => {
     const { data } = await supabase.from('events').select('*').order('created_at', { ascending: false });
@@ -52,7 +64,22 @@ const EventManager = () => {
     }
   };
 
+  const fetchEntries = async (eventId: string) => {
+    const { data } = await supabase.from('event_entries').select('*').eq('event_id', eventId).order('created_at', { ascending: false });
+    if (data) setEntries(data as EventEntry[]);
+  };
+
   useEffect(() => { fetchEvents(); fetchEntryCounts(); }, []);
+
+  const toggleEntries = (eventId: string) => {
+    if (expandedEntries === eventId) {
+      setExpandedEntries(null);
+      setEntries([]);
+    } else {
+      setExpandedEntries(eventId);
+      fetchEntries(eventId);
+    }
+  };
 
   const uploadImage = async (file: File): Promise<string> => {
     const filePath = `events/${Date.now()}-${file.name}`;
@@ -67,19 +94,13 @@ const EventManager = () => {
     try {
       let imageUrl = '';
       if (imageFile) imageUrl = await uploadImage(imageFile);
-
       let galleryUrls: string[] = [];
       if (galleryFiles) {
         for (let i = 0; i < galleryFiles.length; i++) {
           galleryUrls.push(await uploadImage(galleryFiles[i]));
         }
       }
-
-      const { error } = await supabase.from('events').insert({
-        ...form,
-        image_url: imageUrl,
-        gallery_images: galleryUrls,
-      });
+      const { error } = await supabase.from('events').insert({ ...form, image_url: imageUrl, gallery_images: galleryUrls });
       if (error) throw error;
       toast({ title: 'Event created!' });
       setForm(emptyEvent);
@@ -89,9 +110,7 @@ const EventManager = () => {
       fetchEvents();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const toggleActive = async (id: string, current: boolean) => {
@@ -118,7 +137,7 @@ const EventManager = () => {
       </div>
 
       {showForm && (
-        <div className="border rounded-lg p-4 mb-6 space-y-4 bg-gray-50">
+        <div className="border rounded-lg p-4 mb-6 space-y-4 bg-muted">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Title *</Label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} /></div>
             <div><Label>Subtitle</Label><Input value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} /></div>
@@ -156,10 +175,48 @@ const EventManager = () => {
                 <div className="flex items-center gap-3">
                   <Switch checked={ev.is_active} onCheckedChange={() => toggleActive(ev.id, ev.is_active)} />
                   <span className={`text-sm font-medium ${ev.is_active ? 'text-green-600' : 'text-muted-foreground'}`}>{ev.is_active ? 'Active' : 'Inactive'}</span>
-                  <span className="text-xs flex items-center gap-1 text-muted-foreground"><Users size={14} /> {entryCounts[ev.id] || 0} entries</span>
+                  <button onClick={() => toggleEntries(ev.id)} className="text-xs flex items-center gap-1 text-primary hover:underline">
+                    <Users size={14} /> {entryCounts[ev.id] || 0} entries
+                    {expandedEntries === ev.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
                 </div>
                 <Button variant="destructive" size="sm" onClick={() => deleteEvent(ev.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
+
+              {/* Entries table */}
+              {expandedEntries === ev.id && (
+                <div className="border rounded-lg overflow-hidden">
+                  {entries.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4 text-sm">No entries yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {entries.map(entry => (
+                            <TableRow key={entry.id}>
+                              <TableCell className="font-medium">{entry.name}</TableCell>
+                              <TableCell>{entry.email}</TableCell>
+                              <TableCell>{entry.phone}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'N/A'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><Label className="text-xs text-muted-foreground">Title</Label><Input defaultValue={ev.title} onBlur={e => updateField(ev.id, 'title', e.target.value)} /></div>
                 <div><Label className="text-xs text-muted-foreground">Subtitle</Label><Input defaultValue={ev.subtitle || ''} onBlur={e => updateField(ev.id, 'subtitle', e.target.value)} /></div>

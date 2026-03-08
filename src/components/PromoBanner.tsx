@@ -75,18 +75,29 @@ const PromoBanner = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[hsl(240,20%,20%)] via-[hsl(250,25%,28%)] to-[hsl(260,20%,40%)] text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center min-h-[500px] py-12 lg:py-0">
-          <div className="text-center lg:text-left space-y-6 z-10">
+    <section className="relative overflow-hidden text-white min-h-[500px]">
+      {/* Full background image */}
+      {banner.image_url && (
+        <div className="absolute inset-0">
+          <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
+        </div>
+      )}
+      {!banner.image_url && (
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(240,20%,20%)] via-[hsl(250,25%,28%)] to-[hsl(260,20%,40%)]" />
+      )}
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col justify-center min-h-[500px] py-12 max-w-xl">
+          <div className="space-y-6">
             <div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">{banner.title}</h2>
               {banner.subtitle && <p className="text-lg sm:text-xl mt-2 opacity-80 font-light">{banner.subtitle}</p>}
             </div>
-            {banner.description && <p className="text-sm sm:text-base opacity-70 max-w-md mx-auto lg:mx-0">{banner.description}</p>}
+            {banner.description && <p className="text-sm sm:text-base opacity-70 max-w-md">{banner.description}</p>}
 
             {banner.countdown_end && (
-              <div className="flex justify-center lg:justify-start gap-3 sm:gap-5">
+              <div className="flex gap-3 sm:gap-5">
                 {[
                   { val: timeLeft.days, label: 'DAYS' },
                   { val: timeLeft.hours, label: 'HOURS' },
@@ -104,7 +115,7 @@ const PromoBanner = () => {
               </div>
             )}
 
-            <div className="flex flex-wrap justify-center lg:justify-start gap-3">
+            <div className="flex flex-wrap gap-3">
               {banner.button_text && (
                 <Button
                   variant="ghost"
@@ -125,12 +136,6 @@ const PromoBanner = () => {
               )}
             </div>
           </div>
-
-          {banner.image_url && (
-            <div className="flex justify-center lg:justify-end">
-              <img src={banner.image_url} alt={banner.title} className="max-h-[350px] lg:max-h-[450px] w-auto object-contain drop-shadow-2xl" />
-            </div>
-          )}
         </div>
       </div>
     </section>
