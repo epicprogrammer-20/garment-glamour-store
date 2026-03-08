@@ -110,6 +110,30 @@ const Checkout = () => {
         }));
         await supabase.from('order_items').insert(items);
         setTrackingCode(code);
+
+        // Send order confirmation email
+        if (formData.email) {
+          try {
+            await supabase.functions.invoke('send-order-confirmation', {
+              body: {
+                email: formData.email,
+                customerName: formData.fullName,
+                trackingCode: code,
+                items: state.items.map(item => ({
+                  name: item.name,
+                  image: item.image,
+                  size: item.size,
+                  quantity: item.quantity,
+                  price: item.price,
+                })),
+                total: grandTotal,
+                paymentMethod: formData.paymentMethod,
+              },
+            });
+          } catch (e) {
+            console.error('Failed to send order confirmation email:', e);
+          }
+        }
       }
     } catch (err) { console.error('Failed to save order:', err); }
     setShowConfirmation(true);
