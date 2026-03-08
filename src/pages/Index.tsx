@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Header } from '../components/Header';
-import { SecondaryNavbar } from '../components/SecondaryNavbar';
+
 import { Hero } from '../components/Hero';
 import PromoBanner from '../components/PromoBanner';
 import EventBanner from '../components/EventBanner';
