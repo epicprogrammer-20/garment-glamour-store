@@ -46,6 +46,7 @@ export const Footer = () => {
               <li><Link to="/shipping" className="hover:text-white transition-colors">Shipping & Returns</Link></li>
               <li><Link to="/customer-service" className="hover:text-white transition-colors">Customer Service</Link></li>
               <li><Link to="/track-order" className="hover:text-white transition-colors flex items-center gap-1">📦 Track Your Order</Link></li>
+              <li><Link to="/refund" className="hover:text-white transition-colors flex items-center gap-1">🔄 Request a Refund</Link></li>
             </ul>
           </div>
           

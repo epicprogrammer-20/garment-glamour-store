@@ -62,6 +62,7 @@ const App = () => (
                     <Route path="/delivery-restriction" element={<DeliveryRestriction />} />
                     <Route path="/event/:id" element={<EventPage />} />
                     <Route path="/track-order" element={<TrackOrder />} />
+                    <Route path="/refund" element={<Refund />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BrowserRouter>
