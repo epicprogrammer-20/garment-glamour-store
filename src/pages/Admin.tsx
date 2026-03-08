@@ -273,6 +273,7 @@ const Admin = () => {
         </div>
 
         <AnalyticsDashboard />
+        <PromoBannerManager />
         <AddProductForm onProductAdded={fetchProducts} />
         <AddSaleProductForm products={products} onSaleProductAdded={fetchSaleProducts} />
         <AddVideoForm onVideoAdded={fetchVideos} />

@@ -18,6 +18,7 @@ const Index = () => {
     <div className="min-h-screen bg-white">
       <SecondaryNavbar />
       <Header />
+      <PromoBanner />
       <Hero />
       <VideoSection />
       <ImageGallery />

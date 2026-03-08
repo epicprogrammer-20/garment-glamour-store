@@ -242,7 +242,7 @@ const PromoBannerManager = () => {
                 <img src={b.image_url} alt={b.title} className="h-20 object-contain rounded" />
               )}
             </div>
-          ))
+          ))}
         </div>
       )}
     </Card>
