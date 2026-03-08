@@ -17,6 +17,7 @@ interface OrderData {
   total: number;
   payment_method: string | null;
   country: string | null;
+  estimated_delivery: string | null;
 }
 
 interface OrderItem {
@@ -155,7 +156,7 @@ const TrackOrder = () => {
               </div>
             </div>
 
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <p className="font-semibold text-lg capitalize">
                 {mappedStatus === 'delivered'
                   ? 'Your order has been delivered'
@@ -165,6 +166,25 @@ const TrackOrder = () => {
                   ? 'Your order is being processed'
                   : 'Your order has been placed'}
               </p>
+              {order.estimated_delivery && mappedStatus !== 'delivered' && (
+                <p className="text-sm text-muted-foreground">
+                  Estimated delivery: <span className="font-semibold text-foreground">
+                    {new Date(order.estimated_delivery).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                </p>
+              )}
+              {!order.estimated_delivery && mappedStatus !== 'delivered' && order.created_at && (
+                <p className="text-sm text-muted-foreground">
+                  Estimated delivery: <span className="font-semibold text-foreground">
+                    {new Date(new Date(order.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                </p>
+              )}
+              {mappedStatus === 'delivered' && (
+                <a href="/refund" className="inline-block mt-2 text-sm text-primary underline hover:no-underline">
+                  Need a refund? Request one here
+                </a>
+              )}
             </div>
 
             {/* Order Items */}

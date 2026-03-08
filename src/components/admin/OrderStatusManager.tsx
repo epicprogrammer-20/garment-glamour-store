@@ -54,12 +54,35 @@ const OrderStatusManager = () => {
   }, []);
 
   const updateStatus = async (orderId: string, newStatus: string) => {
-    const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+    const order = orders.find(o => o.id === orderId);
+    const updateData: any = { status: newStatus };
+    
+    // Set estimated delivery when moving to processing (7 days from now)
+    if (newStatus === 'processing') {
+      updateData.estimated_delivery = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    const { error } = await supabase.from('orders').update(updateData).eq('id', orderId);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       toast({ title: 'Updated', description: `Order status set to ${newStatus}` });
+      
+      // Send delivery email notification
+      if (newStatus === 'delivered' && order?.customer_email) {
+        try {
+          await supabase.functions.invoke('send-delivery-email', {
+            body: {
+              email: order.customer_email,
+              customerName: order.customer_name || 'Customer',
+              trackingCode: order.tracking_code || '',
+            },
+          });
+        } catch (e) {
+          console.error('Failed to send delivery email:', e);
+        }
+      }
     }
   };
 
