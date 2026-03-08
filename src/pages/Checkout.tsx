@@ -249,13 +249,8 @@ const Checkout = () => {
                 </RadioGroup>
 
                 {(formData.paymentMethod === 'credit-card' || formData.paymentMethod === 'debit-card') && (
-                  <div className="mt-4 space-y-4">
-                    <div><Label htmlFor="cardName">Name on Card</Label><Input id="cardName" name="cardName" value={formData.cardName} onChange={handleInputChange} required /></div>
-                    <div><Label htmlFor="cardNumber">Card Number</Label><Input id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" value={formData.cardNumber} onChange={handleInputChange} required /></div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><Label htmlFor="expiryDate">Expiry Date</Label><Input id="expiryDate" name="expiryDate" placeholder="MM/YY" value={formData.expiryDate} onChange={handleInputChange} required /></div>
-                      <div><Label htmlFor="cvv">CVV</Label><Input id="cvv" name="cvv" placeholder="123" value={formData.cvv} onChange={handleInputChange} required /></div>
-                    </div>
+                  <div className="mt-4 p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground">💳 You'll be securely redirected to Paystack to enter your card details.</p>
                   </div>
                 )}
                 {formData.paymentMethod === 'ecocash' && <div className="mt-4"><Label htmlFor="ecocashNumber">EcoCash Number</Label><Input id="ecocashNumber" name="ecocashNumber" placeholder="077XXXXXXX" value={formData.ecocashNumber} onChange={handleInputChange} required /></div>}
