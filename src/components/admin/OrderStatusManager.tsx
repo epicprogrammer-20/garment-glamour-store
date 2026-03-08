@@ -130,6 +130,9 @@ const OrderStatusManager = () => {
                 const current = order.status === 'pending' ? 'placed' : (order.status || 'placed');
                 return (
                   <TableRow key={order.id}>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      {order.created_at ? format(new Date(order.created_at), 'MMM d, yyyy') : 'N/A'}
+                    </TableCell>
                     <TableCell className="font-mono font-bold">{order.tracking_code || 'N/A'}</TableCell>
                     <TableCell>
                       <div>
