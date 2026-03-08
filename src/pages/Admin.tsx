@@ -162,6 +162,7 @@ const Admin = () => {
             <PromoBannerManager />
             <EventManager />
             <CurrencyRatesManager />
+            <DataBackupManager />
           </TabsContent>
         </Tabs>
       </div>
