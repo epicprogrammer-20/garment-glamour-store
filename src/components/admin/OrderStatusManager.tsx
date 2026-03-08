@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
 import { Search, RefreshCw } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface Order {
   id: string;
@@ -116,6 +117,7 @@ const OrderStatusManager = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Date</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Total</TableHead>
@@ -128,6 +130,9 @@ const OrderStatusManager = () => {
                 const current = order.status === 'pending' ? 'placed' : (order.status || 'placed');
                 return (
                   <TableRow key={order.id}>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      {order.created_at ? format(new Date(order.created_at), 'MMM d, yyyy') : 'N/A'}
+                    </TableCell>
                     <TableCell className="font-mono font-bold">{order.tracking_code || 'N/A'}</TableCell>
                     <TableCell>
                       <div>
@@ -162,7 +167,7 @@ const OrderStatusManager = () => {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">No orders found.</TableCell>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No orders found.</TableCell>
                 </TableRow>
               )}
             </TableBody>
