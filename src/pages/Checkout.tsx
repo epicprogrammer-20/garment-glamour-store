@@ -1,18 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { useCart } from '../contexts/CartContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { OrderConfirmationPopup } from '../components/OrderConfirmationPopup';
 import { useToast } from '../hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useLocation } from 'react-router-dom';
 
 interface ProductFees {
   shipping_cost: number;
