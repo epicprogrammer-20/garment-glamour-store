@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 
@@ -15,6 +15,7 @@ interface Banner {
   secondary_button_link: string;
   countdown_end: string | null;
   is_active: boolean;
+  product_id: number | null;
 }
 
 interface TimeLeft {
@@ -28,6 +29,7 @@ const PromoBanner = () => {
   const [banner, setBanner] = useState<Banner | null>(null);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [expired, setExpired] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBanner = async () => {
@@ -44,13 +46,9 @@ const PromoBanner = () => {
 
   useEffect(() => {
     if (!banner?.countdown_end) return;
-
     const calcTime = () => {
       const diff = new Date(banner.countdown_end!).getTime() - Date.now();
-      if (diff <= 0) {
-        setExpired(true);
-        return;
-      }
+      if (diff <= 0) { setExpired(true); return; }
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
@@ -58,7 +56,6 @@ const PromoBanner = () => {
         seconds: Math.floor((diff / 1000) % 60),
       });
     };
-
     calcTime();
     const timer = setInterval(calcTime, 1000);
     return () => clearInterval(timer);
@@ -68,30 +65,26 @@ const PromoBanner = () => {
 
   const pad = (n: number) => String(n).padStart(2, '0');
 
+  const handleButtonClick = (type: 'primary' | 'secondary') => {
+    if (banner.product_id) {
+      navigate(`/product/${banner.product_id}`);
+    } else {
+      const link = type === 'primary' ? banner.button_link : banner.secondary_button_link;
+      if (link && link !== '#') navigate(link);
+    }
+  };
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-[hsl(240,20%,20%)] via-[hsl(250,25%,28%)] to-[hsl(260,20%,40%)] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center min-h-[500px] py-12 lg:py-0">
-          {/* Text Content */}
           <div className="text-center lg:text-left space-y-6 z-10">
             <div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
-                {banner.title}
-              </h2>
-              {banner.subtitle && (
-                <p className="text-lg sm:text-xl mt-2 opacity-80 font-light">
-                  {banner.subtitle}
-                </p>
-              )}
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">{banner.title}</h2>
+              {banner.subtitle && <p className="text-lg sm:text-xl mt-2 opacity-80 font-light">{banner.subtitle}</p>}
             </div>
+            {banner.description && <p className="text-sm sm:text-base opacity-70 max-w-md mx-auto lg:mx-0">{banner.description}</p>}
 
-            {banner.description && (
-              <p className="text-sm sm:text-base opacity-70 max-w-md mx-auto lg:mx-0">
-                {banner.description}
-              </p>
-            )}
-
-            {/* Countdown */}
             {banner.countdown_end && (
               <div className="flex justify-center lg:justify-start gap-3 sm:gap-5">
                 {[
@@ -103,51 +96,39 @@ const PromoBanner = () => {
                   <React.Fragment key={item.label}>
                     {i > 0 && <span className="text-3xl sm:text-4xl font-bold opacity-60 self-start mt-1">:</span>}
                     <div className="text-center">
-                      <span className="text-3xl sm:text-4xl lg:text-5xl font-bold tabular-nums">
-                        {pad(item.val)}
-                      </span>
-                      <p className="text-[10px] sm:text-xs tracking-widest opacity-60 mt-1">
-                        {item.label}
-                      </p>
+                      <span className="text-3xl sm:text-4xl lg:text-5xl font-bold tabular-nums">{pad(item.val)}</span>
+                      <p className="text-[10px] sm:text-xs tracking-widest opacity-60 mt-1">{item.label}</p>
                     </div>
                   </React.Fragment>
                 ))}
               </div>
             )}
 
-            {/* Buttons */}
             <div className="flex flex-wrap justify-center lg:justify-start gap-3">
               {banner.button_text && (
-                <a href={banner.button_link || '#'}>
-                  <Button
-                    variant="ghost"
-                    className="text-white border-b-2 border-white/60 rounded-none px-4 py-2 hover:bg-white/10 hover:border-white text-sm sm:text-base"
-                  >
-                    {banner.button_text}
-                  </Button>
-                </a>
+                <Button
+                  variant="ghost"
+                  className="text-white border-b-2 border-white/60 rounded-none px-4 py-2 hover:bg-white/10 hover:border-white text-sm sm:text-base"
+                  onClick={() => handleButtonClick('primary')}
+                >
+                  {banner.button_text}
+                </Button>
               )}
               {banner.secondary_button_text && (
-                <a href={banner.secondary_button_link || '#'}>
-                  <Button
-                    variant="outline"
-                    className="border-white/40 text-white rounded-full px-6 py-2 hover:bg-white/10 hover:border-white text-sm sm:text-base bg-transparent"
-                  >
-                    {banner.secondary_button_text}
-                  </Button>
-                </a>
+                <Button
+                  variant="outline"
+                  className="border-white/40 text-white rounded-full px-6 py-2 hover:bg-white/10 hover:border-white text-sm sm:text-base bg-transparent"
+                  onClick={() => handleButtonClick('secondary')}
+                >
+                  {banner.secondary_button_text}
+                </Button>
               )}
             </div>
           </div>
 
-          {/* Image */}
           {banner.image_url && (
             <div className="flex justify-center lg:justify-end">
-              <img
-                src={banner.image_url}
-                alt={banner.title}
-                className="max-h-[350px] lg:max-h-[450px] w-auto object-contain drop-shadow-2xl"
-              />
+              <img src={banner.image_url} alt={banner.title} className="max-h-[350px] lg:max-h-[450px] w-auto object-contain drop-shadow-2xl" />
             </div>
           )}
         </div>
