@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Header } from '../components/Header';
-import { SecondaryNavbar } from '../components/SecondaryNavbar';
+
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
 import { Phone, Mail, Clock, MessageCircle, ArrowLeft, AlertCircle } from 'lucide-react';
@@ -17,7 +17,7 @@ const CustomerService = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <SecondaryNavbar />
+      
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <Button 

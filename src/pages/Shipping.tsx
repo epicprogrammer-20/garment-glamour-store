@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Header } from '../components/Header';
-import { SecondaryNavbar } from '../components/SecondaryNavbar';
+
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
 import { Truck, Clock, Shield, Globe } from 'lucide-react';
@@ -12,7 +12,7 @@ const Shipping = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SecondaryNavbar />
+      
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">

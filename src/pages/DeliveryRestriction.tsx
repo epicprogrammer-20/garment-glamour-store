@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Header } from '../components/Header';
-import { SecondaryNavbar } from '../components/SecondaryNavbar';
+
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
 import { MapPin, MessageCircle, Calendar, Bell, ArrowLeft } from 'lucide-react';
@@ -19,7 +19,7 @@ const DeliveryRestriction = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <SecondaryNavbar />
+      
       <Header />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <Button 

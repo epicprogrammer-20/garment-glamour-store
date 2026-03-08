@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Header } from '../components/Header';
-import { SecondaryNavbar } from '../components/SecondaryNavbar';
+
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
 import { MapPin, Phone, Mail, Send, ArrowLeft } from 'lucide-react';
@@ -42,7 +42,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <SecondaryNavbar />
+      
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <Button 

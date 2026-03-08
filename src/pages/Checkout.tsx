@@ -1,18 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { useCart } from '../contexts/CartContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { OrderConfirmationPopup } from '../components/OrderConfirmationPopup';
 import { useToast } from '../hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useLocation } from 'react-router-dom';
 
 interface ProductFees {
   shipping_cost: number;
@@ -23,9 +23,11 @@ interface ProductFees {
 const Checkout = () => {
   const { state, dispatch } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
   const locationData = location.state?.locationData;
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
+  const { user, loading: authLoading } = useAuth();
   
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [productFees, setProductFees] = useState<Record<number, ProductFees>>({});
@@ -34,6 +36,9 @@ const Checkout = () => {
     address: locationData?.location || '', city: locationData?.city || '', state: '', zipCode: '', country: locationData?.country || '',
     paymentMethod: 'credit-card', cardNumber: '', expiryDate: '', cvv: '', cardName: '', ecocashNumber: '', innbucksNumber: ''
   });
+
+  const [trackingCode, setTrackingCode] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchFees = async () => {
@@ -48,6 +53,21 @@ const Checkout = () => {
     };
     fetchFees();
   }, [state.items]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast({ title: "Login Required", description: "Please create an account or log in to proceed to checkout.", variant: "destructive" });
+      navigate('/profile');
+    }
+  }, [user, authLoading, navigate, toast]);
+
+  if (authLoading) {
+    return <div className="min-h-screen bg-background"><Header /><div className="flex items-center justify-center min-h-[60vh]"><div>Loading...</div></div><Footer /></div>;
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -79,16 +99,12 @@ const Checkout = () => {
     window.open(`https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  const [trackingCode, setTrackingCode] = useState('');
-
   const generateTrackingCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
     for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
     return code;
   };
-
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const saveOrder = async (code: string, paymentMethod: string, skipEmail = false) => {
     const { data: orderData, error: orderError } = await supabase.from('orders').insert({

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Header } from '../components/Header';
-import { SecondaryNavbar } from '../components/SecondaryNavbar';
+
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
 import { ChevronDown, ChevronUp, Search, HelpCircle } from 'lucide-react';
@@ -52,7 +52,7 @@ const Help = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <SecondaryNavbar />
+      
       <Header />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
