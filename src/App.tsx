@@ -28,6 +28,7 @@ import DeliveryRestriction from "./pages/DeliveryRestriction";
 import EventPage from "./pages/EventPage";
 import TrackOrder from "./pages/TrackOrder";
 import Refund from "./pages/Refund";
+import PaymentCallback from "./pages/PaymentCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
                     <Route path="/event/:id" element={<EventPage />} />
                     <Route path="/track-order" element={<TrackOrder />} />
                     <Route path="/refund" element={<Refund />} />
+                    <Route path="/payment-callback" element={<PaymentCallback />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BrowserRouter>
