@@ -38,20 +38,59 @@ serve(async (req) => {
       });
     }
 
-    // Update order status and fetch tracking code if order_id is in metadata
     const orderId = data.data.metadata?.order_id;
     const trackingCode = data.data.metadata?.tracking_code;
-    
+
     if (orderId) {
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       );
 
+      // Update order status
       await supabase.from('orders').update({
         status: 'confirmed',
         payment_method: 'paystack-card',
       }).eq('id', orderId);
+
+      // Fetch order and items to send confirmation email
+      const { data: order } = await supabase.from('orders').select('*').eq('id', orderId).single();
+      const { data: orderItems } = await supabase.from('order_items').select('*').eq('order_id', orderId);
+
+      if (order?.customer_email && orderItems) {
+        try {
+          const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+          if (RESEND_API_KEY) {
+            // Invoke the send-order-confirmation function
+            const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+            const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY');
+            
+            await fetch(`${supabaseUrl}/functions/v1/send-order-confirmation`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              },
+              body: JSON.stringify({
+                email: order.customer_email,
+                customerName: order.customer_name || 'Customer',
+                trackingCode: trackingCode || order.tracking_code,
+                items: orderItems.map((item: any) => ({
+                  name: item.product_name,
+                  image: item.product_image,
+                  size: item.size,
+                  quantity: item.quantity,
+                  price: item.price,
+                })),
+                total: order.total,
+                paymentMethod: 'paystack-card',
+              }),
+            });
+          }
+        } catch (e) {
+          console.error('Failed to send order confirmation email:', e);
+        }
+      }
     }
 
     return new Response(JSON.stringify({
