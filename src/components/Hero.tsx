@@ -41,8 +41,8 @@ export const Hero = () => {
                 <p className="text-gray-600 mb-4">Spring/Summer 2024</p>
                 <div className="flex justify-between items-center">
                   <span className="text-3xl font-bold">40% OFF</span>
-                  <button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-                    Shop Now
+                  <button onClick={scrollToGallery} className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                    View Collections
                   </button>
                 </div>
               </div>

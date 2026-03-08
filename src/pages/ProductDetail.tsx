@@ -82,8 +82,9 @@ const ProductDetail = () => {
       toast({ title: "Please select a size", variant: "destructive" });
       return;
     }
-    dispatch({ type: 'ADD_ITEM', payload: { id: product.id, name: product.name, price: product.price, image: product.image, category: product.category, size: selectedSize || 'One Size' } });
-    toast({ title: "Added to cart", description: `${product.name} has been added to your cart.` });
+    dispatch({ type: 'ADD_ITEM', payload: { id: product.id, name: product.name, price: product.price, image: product.image, category: product.category, size: selectedSize || 'One Size', quantity } });
+    toast({ title: "Added to cart", description: `${quantity}x ${product.name} added to your cart.` });
+    setQuantity(1);
   };
 
   const taxAmount = product.tax_rate ? (product.price * product.tax_rate / 100) : 0;
