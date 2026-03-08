@@ -273,6 +273,7 @@ export type Database = {
           created_at: string | null
           customer_email: string | null
           customer_name: string | null
+          estimated_delivery: string | null
           id: string
           payment_method: string | null
           status: string | null
@@ -285,6 +286,7 @@ export type Database = {
           created_at?: string | null
           customer_email?: string | null
           customer_name?: string | null
+          estimated_delivery?: string | null
           id?: string
           payment_method?: string | null
           status?: string | null
@@ -297,6 +299,7 @@ export type Database = {
           created_at?: string | null
           customer_email?: string | null
           customer_name?: string | null
+          estimated_delivery?: string | null
           id?: string
           payment_method?: string | null
           status?: string | null
@@ -479,26 +482,38 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          customer_email: string | null
+          customer_name: string | null
           id: string
+          message: string | null
           order_id: string | null
           reason: string | null
           status: string | null
+          tracking_code: string | null
         }
         Insert: {
           amount: number
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
           id?: string
+          message?: string | null
           order_id?: string | null
           reason?: string | null
           status?: string | null
+          tracking_code?: string | null
         }
         Update: {
           amount?: number
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
           id?: string
+          message?: string | null
           order_id?: string | null
           reason?: string | null
           status?: string | null
+          tracking_code?: string | null
         }
         Relationships: [
           {
