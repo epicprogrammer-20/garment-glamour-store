@@ -82,10 +82,23 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await supabase.from('orders').insert({
+      const { data: orderData, error: orderError } = await supabase.from('orders').insert({
         total: grandTotal, payment_method: formData.paymentMethod, country: formData.country,
         customer_email: formData.email, customer_name: formData.fullName, status: 'pending',
-      });
+      }).select('id').single();
+
+      if (orderData && !orderError) {
+        const items = state.items.map(item => ({
+          order_id: orderData.id,
+          product_id: item.id,
+          product_name: item.name,
+          product_image: item.image,
+          size: item.size,
+          quantity: item.quantity,
+          price: item.price,
+        }));
+        await supabase.from('order_items').insert(items);
+      }
     } catch (err) { console.error('Failed to save order:', err); }
     setShowConfirmation(true);
     dispatch({ type: 'CLEAR_CART' });
