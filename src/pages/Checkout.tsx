@@ -262,8 +262,8 @@ const Checkout = () => {
                 {formData.paymentMethod === 'innbucks' && <div className="mt-4"><Label htmlFor="innbucksNumber">InnBucks Number</Label><Input id="innbucksNumber" name="innbucksNumber" placeholder="077XXXXXXX" value={formData.innbucksNumber} onChange={handleInputChange} required /></div>}
               </div>
 
-              <button type="submit" className="w-full bg-primary text-primary-foreground py-4 rounded-lg hover:bg-primary/90 transition-colors font-semibold">
-                Complete Order - {formatPrice(grandTotal)}
+              <button type="submit" disabled={isProcessing} className="w-full bg-primary text-primary-foreground py-4 rounded-lg hover:bg-primary/90 transition-colors font-semibold disabled:opacity-50">
+                {isProcessing ? 'Processing...' : (formData.paymentMethod === 'credit-card' || formData.paymentMethod === 'debit-card') ? `Pay with Card - ${formatPrice(grandTotal)}` : `Complete Order - ${formatPrice(grandTotal)}`}
               </button>
             </form>
           </div>

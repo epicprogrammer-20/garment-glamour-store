@@ -64,6 +64,7 @@ const App = () => (
                     <Route path="/event/:id" element={<EventPage />} />
                     <Route path="/track-order" element={<TrackOrder />} />
                     <Route path="/refund" element={<Refund />} />
+                    <Route path="/payment-callback" element={<PaymentCallback />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BrowserRouter>
