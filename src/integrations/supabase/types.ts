@@ -277,6 +277,7 @@ export type Database = {
           payment_method: string | null
           status: string | null
           total: number
+          tracking_code: string | null
           user_id: string | null
         }
         Insert: {
@@ -288,6 +289,7 @@ export type Database = {
           payment_method?: string | null
           status?: string | null
           total: number
+          tracking_code?: string | null
           user_id?: string | null
         }
         Update: {
@@ -299,6 +301,7 @@ export type Database = {
           payment_method?: string | null
           status?: string | null
           total?: number
+          tracking_code?: string | null
           user_id?: string | null
         }
         Relationships: []
