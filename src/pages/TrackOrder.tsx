@@ -17,6 +17,7 @@ interface OrderData {
   total: number;
   payment_method: string | null;
   country: string | null;
+  estimated_delivery: string | null;
 }
 
 interface OrderItem {
