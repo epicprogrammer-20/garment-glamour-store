@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Header } from '../components/Header';
 import { SecondaryNavbar } from '../components/SecondaryNavbar';
 import { Hero } from '../components/Hero';
+import PromoBanner from '../components/PromoBanner';
 import { VideoSection } from '../components/VideoSection';
 import { ImageGallery } from '../components/ImageGallery';
 import { ProductGrid } from '../components/ProductGrid';
