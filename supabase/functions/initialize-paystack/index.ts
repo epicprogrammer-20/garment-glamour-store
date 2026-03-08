@@ -28,7 +28,8 @@ serve(async (req) => {
       });
     }
 
-    // Paystack expects amount in kobo/cents (smallest currency unit)
+    // Paystack expects amount in smallest currency unit
+    const currency = 'ZAR'; // Change to your supported Paystack currency
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -37,8 +38,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         email,
-        amount: Math.round(amount * 100), // Convert to kobo
-        currency: 'USD',
+        amount: Math.round(amount * 100),
+        currency,
         callback_url,
         metadata,
       }),
