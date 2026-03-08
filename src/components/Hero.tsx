@@ -25,10 +25,10 @@ export const Hero = () => {
               Discover our curated collection of premium fashion pieces that define modern elegance.
             </p>
             <div className="flex space-x-4">
-              <button className="bg-white text-black px-8 py-3 font-semibold hover:bg-gray-100 transition-colors">
+              <button onClick={() => navigate('/women')} className="bg-white text-black px-8 py-3 font-semibold hover:bg-gray-100 transition-colors">
                 Shop Women
               </button>
-              <button className="border border-white text-white px-8 py-3 font-semibold hover:bg-white hover:text-black transition-colors">
+              <button onClick={() => navigate('/men')} className="border border-white text-white px-8 py-3 font-semibold hover:bg-white hover:text-black transition-colors">
                 Shop Men
               </button>
             </div>
