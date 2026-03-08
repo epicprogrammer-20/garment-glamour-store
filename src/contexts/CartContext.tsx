@@ -22,7 +22,7 @@ interface CartState {
 }
 
 type CartAction = 
-  | { type: 'ADD_ITEM'; payload: Product & { size: string } }
+  | { type: 'ADD_ITEM'; payload: Product & { size: string; quantity?: number } }
   | { type: 'REMOVE_FROM_CART'; payload: { id: number; size: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { id: number; size: string; quantity: number } }
   | { type: 'TOGGLE_CART' }
