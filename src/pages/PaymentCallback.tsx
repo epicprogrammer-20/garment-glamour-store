@@ -67,7 +67,7 @@ const PaymentCallback = () => {
             <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
             <h1 className="text-2xl font-bold">Payment Successful!</h1>
             <p className="text-muted-foreground">
-              Your payment of ${orderData?.amount?.toFixed(2)} has been confirmed.
+              Your payment of R{orderData?.amount?.toFixed(2)} has been confirmed.
             </p>
             <p className="text-sm text-muted-foreground">Reference: {reference}</p>
 
