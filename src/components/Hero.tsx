@@ -1,7 +1,15 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export const Hero = () => {
+  const navigate = useNavigate();
+
+  const scrollToGallery = () => {
+    const el = document.getElementById('style-gallery');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <section className="relative bg-gradient-to-r from-gray-900 to-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
