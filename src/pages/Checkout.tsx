@@ -90,7 +90,7 @@ const Checkout = () => {
 
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const saveOrder = async (code: string, paymentMethod: string) => {
+  const saveOrder = async (code: string, paymentMethod: string, skipEmail = false) => {
     const { data: orderData, error: orderError } = await supabase.from('orders').insert({
       total: grandTotal, payment_method: paymentMethod, country: formData.country,
       customer_email: formData.email, customer_name: formData.fullName, status: 'placed',
@@ -109,7 +109,7 @@ const Checkout = () => {
       }));
       await supabase.from('order_items').insert(items);
 
-      if (formData.email) {
+      if (formData.email && !skipEmail) {
         try {
           await supabase.functions.invoke('send-order-confirmation', {
             body: {
