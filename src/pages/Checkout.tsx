@@ -143,11 +143,22 @@ const Checkout = () => {
         return;
       }
 
+      // Fetch ZAR rate to convert USD total to ZAR for Paystack
+      let zarAmount = grandTotal;
+      const { data: zarRate } = await supabase
+        .from('currency_rates')
+        .select('rate')
+        .eq('currency_code', 'ZAR')
+        .single();
+      if (zarRate?.rate) {
+        zarAmount = Math.round(grandTotal * zarRate.rate * 100) / 100;
+      }
+
       const callbackUrl = `${window.location.origin}/payment-callback`;
       const { data, error } = await supabase.functions.invoke('initialize-paystack', {
         body: {
           email: formData.email,
-          amount: grandTotal,
+          amount: zarAmount,
           callback_url: callbackUrl,
           metadata: { order_id: orderId, tracking_code: code },
         },
