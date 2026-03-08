@@ -485,6 +485,7 @@ export type Database = {
           customer_email: string | null
           customer_name: string | null
           id: string
+          images: string[] | null
           message: string | null
           order_id: string | null
           reason: string | null
@@ -497,6 +498,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           id?: string
+          images?: string[] | null
           message?: string | null
           order_id?: string | null
           reason?: string | null
@@ -509,6 +511,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           id?: string
+          images?: string[] | null
           message?: string | null
           order_id?: string | null
           reason?: string | null
