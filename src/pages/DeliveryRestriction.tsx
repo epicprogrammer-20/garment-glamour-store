@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Header } from '../components/Header';
-import { SecondaryNavbar } from '../components/SecondaryNavbar';
+
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
 import { MapPin, MessageCircle, Calendar, Bell, ArrowLeft } from 'lucide-react';
