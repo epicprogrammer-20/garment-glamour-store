@@ -97,13 +97,12 @@ const DataBackupManager = () => {
   const handleClearAll = async () => {
     setClearing(true);
     try {
-      // Delete in correct order (order_items before orders due to FK)
+      // Delete in correct order (order_items before orders due to FK) — keep site_visits
       await supabase.from('order_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('refunds').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('site_visits').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
-      toast({ title: 'Data Cleared', description: 'All orders, refunds, and site visits have been permanently deleted.' });
+      toast({ title: 'Data Cleared', description: 'All orders, order items, and refunds have been permanently deleted. Site visits were preserved.' });
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to clear data.', variant: 'destructive' });
     } finally {
