@@ -37,20 +37,8 @@ const Checkout = () => {
     paymentMethod: 'credit-card', cardNumber: '', expiryDate: '', cvv: '', cardName: '', ecocashNumber: '', innbucksNumber: ''
   });
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      toast({ title: "Login Required", description: "Please create an account or log in to proceed to checkout.", variant: "destructive" });
-      navigate('/profile');
-    }
-  }, [user, authLoading, navigate, toast]);
-
-  if (authLoading) {
-    return <div className="min-h-screen bg-background"><Header /><div className="flex items-center justify-center min-h-[60vh]"><div>Loading...</div></div><Footer /></div>;
-  }
-
-  if (!user) {
-    return null;
-  }
+  const [trackingCode, setTrackingCode] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchFees = async () => {
@@ -65,6 +53,21 @@ const Checkout = () => {
     };
     fetchFees();
   }, [state.items]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast({ title: "Login Required", description: "Please create an account or log in to proceed to checkout.", variant: "destructive" });
+      navigate('/profile');
+    }
+  }, [user, authLoading, navigate, toast]);
+
+  if (authLoading) {
+    return <div className="min-h-screen bg-background"><Header /><div className="flex items-center justify-center min-h-[60vh]"><div>Loading...</div></div><Footer /></div>;
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -96,16 +99,12 @@ const Checkout = () => {
     window.open(`https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  const [trackingCode, setTrackingCode] = useState('');
-
   const generateTrackingCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
     for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
     return code;
   };
-
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const saveOrder = async (code: string, paymentMethod: string, skipEmail = false) => {
     const { data: orderData, error: orderError } = await supabase.from('orders').insert({
