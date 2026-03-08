@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
 import { Search, RefreshCw } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface Order {
   id: string;
