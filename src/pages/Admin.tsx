@@ -21,6 +21,7 @@ import CurrencyRatesManager from '@/components/admin/CurrencyRatesManager';
 import StockManager from '@/components/admin/StockManager';
 import OrdersHistory from '@/components/admin/OrdersHistory';
 import OrderStatusManager from '@/components/admin/OrderStatusManager';
+import RefundManager from '@/components/admin/RefundManager';
 
 interface Product { id: number; name: string; price: number; image: string; category: string; sizes: string[]; description?: string; }
 interface Video { id: string; title: string; url: string; description?: string; is_active: boolean; }
