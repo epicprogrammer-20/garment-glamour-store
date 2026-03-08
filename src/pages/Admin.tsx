@@ -126,7 +126,8 @@ const Admin = () => {
             <AnalyticsDashboard />
           </TabsContent>
 
-          <TabsContent value="orders">
+          <TabsContent value="orders" className="space-y-6">
+            <OrderStatusManager />
             <OrdersHistory />
           </TabsContent>
 

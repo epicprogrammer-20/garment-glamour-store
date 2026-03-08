@@ -60,6 +60,7 @@ const App = () => (
                     <Route path="/customer-service" element={<CustomerService />} />
                     <Route path="/delivery-restriction" element={<DeliveryRestriction />} />
                     <Route path="/event/:id" element={<EventPage />} />
+                    <Route path="/track-order" element={<TrackOrder />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BrowserRouter>

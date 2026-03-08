@@ -240,7 +240,7 @@ const Checkout = () => {
         </div>
       </div>
       <Footer />
-      <OrderConfirmationPopup isOpen={showConfirmation} onClose={() => setShowConfirmation(false)} />
+      <OrderConfirmationPopup isOpen={showConfirmation} onClose={() => setShowConfirmation(false)} trackingCode={trackingCode} />
     </div>
   );
 };
