@@ -14,6 +14,7 @@ import { SaleProductsList } from '@/components/admin/SaleProductsList';
 import { VideosList } from '@/components/admin/VideosList';
 import { GalleryImagesList } from '@/components/admin/GalleryImagesList';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
+import PromoBannerManager from '@/components/admin/PromoBannerManager';
 
 interface Product {
   id: number;
