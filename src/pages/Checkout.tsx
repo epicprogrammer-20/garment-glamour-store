@@ -88,54 +88,100 @@ const Checkout = () => {
     return code;
   };
 
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const saveOrder = async (code: string, paymentMethod: string) => {
+    const { data: orderData, error: orderError } = await supabase.from('orders').insert({
+      total: grandTotal, payment_method: paymentMethod, country: formData.country,
+      customer_email: formData.email, customer_name: formData.fullName, status: 'placed',
+      tracking_code: code,
+    }).select('id').single();
+
+    if (orderData && !orderError) {
+      const items = state.items.map(item => ({
+        order_id: orderData.id,
+        product_id: item.id,
+        product_name: item.name,
+        product_image: item.image,
+        size: item.size,
+        quantity: item.quantity,
+        price: item.price,
+      }));
+      await supabase.from('order_items').insert(items);
+
+      if (formData.email) {
+        try {
+          await supabase.functions.invoke('send-order-confirmation', {
+            body: {
+              email: formData.email,
+              customerName: formData.fullName,
+              trackingCode: code,
+              items: state.items.map(item => ({
+                name: item.name, image: item.image, size: item.size,
+                quantity: item.quantity, price: item.price,
+              })),
+              total: grandTotal,
+              paymentMethod: paymentMethod,
+            },
+          });
+        } catch (e) {
+          console.error('Failed to send order confirmation email:', e);
+        }
+      }
+      return orderData.id;
+    }
+    return null;
+  };
+
+  const handlePaystackPayment = async (code: string) => {
+    setIsProcessing(true);
+    try {
+      const orderId = await saveOrder(code, 'paystack-card');
+      if (!orderId) {
+        toast({ title: 'Error', description: 'Failed to create order', variant: 'destructive' });
+        setIsProcessing(false);
+        return;
+      }
+
+      const callbackUrl = `${window.location.origin}/payment-callback`;
+      const { data, error } = await supabase.functions.invoke('initialize-paystack', {
+        body: {
+          email: formData.email,
+          amount: grandTotal,
+          callback_url: callbackUrl,
+          metadata: { order_id: orderId, tracking_code: code },
+        },
+      });
+
+      if (error || !data?.authorization_url) {
+        toast({ title: 'Payment Error', description: 'Failed to initialize payment. Please try again.', variant: 'destructive' });
+        setIsProcessing(false);
+        return;
+      }
+
+      dispatch({ type: 'CLEAR_CART' });
+      window.location.href = data.authorization_url;
+    } catch (err) {
+      console.error('Paystack error:', err);
+      toast({ title: 'Error', description: 'Something went wrong. Please try again.', variant: 'destructive' });
+      setIsProcessing(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = generateTrackingCode();
+
+    if (formData.paymentMethod === 'credit-card' || formData.paymentMethod === 'debit-card') {
+      await handlePaystackPayment(code);
+      return;
+    }
+
+    // Non-card payments: original flow
     try {
-      const { data: orderData, error: orderError } = await supabase.from('orders').insert({
-        total: grandTotal, payment_method: formData.paymentMethod, country: formData.country,
-        customer_email: formData.email, customer_name: formData.fullName, status: 'placed',
-        tracking_code: code,
-      }).select('id').single();
-
-      if (orderData && !orderError) {
-        const items = state.items.map(item => ({
-          order_id: orderData.id,
-          product_id: item.id,
-          product_name: item.name,
-          product_image: item.image,
-          size: item.size,
-          quantity: item.quantity,
-          price: item.price,
-        }));
-        await supabase.from('order_items').insert(items);
-        setTrackingCode(code);
-
-        // Send order confirmation email
-        if (formData.email) {
-          try {
-            await supabase.functions.invoke('send-order-confirmation', {
-              body: {
-                email: formData.email,
-                customerName: formData.fullName,
-                trackingCode: code,
-                items: state.items.map(item => ({
-                  name: item.name,
-                  image: item.image,
-                  size: item.size,
-                  quantity: item.quantity,
-                  price: item.price,
-                })),
-                total: grandTotal,
-                paymentMethod: formData.paymentMethod,
-              },
-            });
-          } catch (e) {
-            console.error('Failed to send order confirmation email:', e);
-          }
-        }
-      }
+      await saveOrder(code, formData.paymentMethod);
     } catch (err) { console.error('Failed to save order:', err); }
+    setTrackingCode(code);
     setShowConfirmation(true);
     dispatch({ type: 'CLEAR_CART' });
     setTimeout(() => redirectToWhatsApp(), 2000);
