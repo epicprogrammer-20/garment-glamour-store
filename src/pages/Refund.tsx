@@ -10,7 +10,7 @@ import { Label } from '../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
-import { AlertCircle, CheckCircle2, Clock, Search } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Search, Upload, X, ImageIcon } from 'lucide-react';
 
 const REFUND_REASONS = [
   'Item arrived damaged',
@@ -30,6 +30,9 @@ const Refund = () => {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const lookupOrder = async () => {
     if (!trackingCode.trim()) return;
@@ -59,6 +62,38 @@ const Refund = () => {
     setLoading(false);
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (images.length + files.length > 5) {
+      toast({ title: 'Maximum 5 images allowed', variant: 'destructive' });
+      return;
+    }
+    const newImages = [...images, ...files];
+    setImages(newImages);
+    const newPreviews = files.map(f => URL.createObjectURL(f));
+    setImagePreviews(prev => [...prev, ...newPreviews]);
+  };
+
+  const removeImage = (index: number) => {
+    URL.revokeObjectURL(imagePreviews[index]);
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadImages = async (): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const file of images) {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from('refunds').upload(path, file);
+      if (!error) {
+        const { data: urlData } = supabase.storage.from('refunds').getPublicUrl(path);
+        urls.push(urlData.publicUrl);
+      }
+    }
+    return urls;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason) {
@@ -67,6 +102,14 @@ const Refund = () => {
     }
 
     setLoading(true);
+    setUploading(true);
+
+    let imageUrls: string[] = [];
+    if (images.length > 0) {
+      imageUrls = await uploadImages();
+    }
+    setUploading(false);
+
     const { error: err } = await supabase.from('refunds').insert({
       order_id: order.id,
       amount: order.total,
@@ -76,6 +119,7 @@ const Refund = () => {
       customer_name: order.customer_name,
       tracking_code: order.tracking_code,
       message: customMessage || null,
+      images: imageUrls,
     });
 
     if (err) {
@@ -113,7 +157,7 @@ const Refund = () => {
               </div>
             </div>
           </Card>
-          <Button onClick={() => { setSubmitted(false); setOrder(null); setTrackingCode(''); setReason(''); setCustomMessage(''); }}>
+          <Button onClick={() => { setSubmitted(false); setOrder(null); setTrackingCode(''); setReason(''); setCustomMessage(''); setImages([]); setImagePreviews([]); }}>
             Submit Another Request
           </Button>
         </div>
@@ -199,8 +243,45 @@ const Refund = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={loading || !reason}>
-                Submit Refund Request
+              {/* Image Upload */}
+              <div>
+                <Label className="text-base font-semibold mb-2 block">
+                  Upload Photos <span className="text-muted-foreground font-normal text-sm">(optional, max 5)</span>
+                </Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Upload photos of the product to support your refund request
+                </p>
+                <div className="flex flex-wrap gap-3 mb-3">
+                  {imagePreviews.map((preview, i) => (
+                    <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border group">
+                      <img src={preview} alt={`Upload ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {images.length < 5 && (
+                    <label className="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center cursor-pointer transition-colors">
+                      <Upload size={18} className="text-muted-foreground mb-1" />
+                      <span className="text-xs text-muted-foreground">Add</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" size="lg" disabled={loading || !reason || uploading}>
+                {uploading ? 'Uploading images...' : 'Submit Refund Request'}
               </Button>
             </form>
           </Card>

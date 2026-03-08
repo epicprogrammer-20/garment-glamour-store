@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Home, BarChart3, ShoppingBag, Package, Tag, Image, Settings } from 'lucide-react';
+import { LogOut, Home, BarChart3, ShoppingBag, Package, Tag, Image, Settings, RotateCcw } from 'lucide-react';
 import AdminAuth from '@/components/AdminAuth';
 import { AddProductForm } from '@/components/admin/AddProductForm';
 import { AddSaleProductForm } from '@/components/admin/AddSaleProductForm';
@@ -109,6 +109,9 @@ const Admin = () => {
             <TabsTrigger value="orders" className="flex items-center gap-1 text-xs sm:text-sm">
               <ShoppingBag size={14} /> Orders
             </TabsTrigger>
+            <TabsTrigger value="refunds" className="flex items-center gap-1 text-xs sm:text-sm">
+              <RotateCcw size={14} /> Refunds
+            </TabsTrigger>
             <TabsTrigger value="products" className="flex items-center gap-1 text-xs sm:text-sm">
               <Package size={14} /> Products
             </TabsTrigger>
@@ -129,8 +132,11 @@ const Admin = () => {
 
           <TabsContent value="orders" className="space-y-6">
             <OrderStatusManager />
-            <RefundManager />
             <OrdersHistory />
+          </TabsContent>
+
+          <TabsContent value="refunds" className="space-y-6">
+            <RefundManager />
           </TabsContent>
 
           <TabsContent value="products" className="space-y-6">
