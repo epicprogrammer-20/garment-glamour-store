@@ -23,8 +23,14 @@ const Contact = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Handle form submission logic here
+    
+    // Create mailto link with form data
+    const mailtoSubject = encodeURIComponent(formData.subject || 'Contact Form Inquiry');
+    const mailtoBody = encodeURIComponent(
+      `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+    );
+    
+    window.location.href = `mailto:auraclothing@gmail.com?subject=${mailtoSubject}&body=${mailtoBody}`;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -143,14 +149,18 @@ const Contact = () => {
                 <Phone className="text-purple-600 mr-4 mt-1" size={20} />
                 <div>
                   <h3 className="font-semibold mb-1">Phone</h3>
-                  <p className="text-gray-600">+1 (555) 123-4567</p>
+                  <a href="tel:0783720685" className="text-gray-600 hover:text-purple-600">
+                    0783720685
+                  </a>
                 </div>
               </div>
               <div className="flex items-start">
                 <Mail className="text-purple-600 mr-4 mt-1" size={20} />
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
-                  <p className="text-gray-600">contact@luxe.com</p>
+                  <a href="mailto:auraclothing@gmail.com" className="text-gray-600 hover:text-purple-600">
+                    auraclothing@gmail.com
+                  </a>
                 </div>
               </div>
             </div>
