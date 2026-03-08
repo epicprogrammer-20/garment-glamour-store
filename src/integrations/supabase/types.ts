@@ -55,6 +55,116 @@ export type Database = {
           },
         ]
       }
+      currency_rates: {
+        Row: {
+          currency_code: string
+          currency_name: string
+          id: string
+          rate: number
+          symbol: string
+          updated_at: string | null
+        }
+        Insert: {
+          currency_code: string
+          currency_name: string
+          id?: string
+          rate?: number
+          symbol: string
+          updated_at?: string | null
+        }
+        Update: {
+          currency_code?: string
+          currency_name?: string
+          id?: string
+          rate?: number
+          symbol?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      event_entries: {
+        Row: {
+          created_at: string | null
+          email: string
+          event_id: string
+          id: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          event_id: string
+          id?: string
+          name: string
+          phone: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          event_id?: string
+          id?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_entries_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          competition_description: string | null
+          competition_prize: string | null
+          competition_title: string | null
+          created_at: string | null
+          description: string | null
+          gallery_images: string[] | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          learn_more_text: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          competition_description?: string | null
+          competition_prize?: string | null
+          competition_title?: string | null
+          created_at?: string | null
+          description?: string | null
+          gallery_images?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          learn_more_text?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          competition_description?: string | null
+          competition_prize?: string | null
+          competition_title?: string | null
+          created_at?: string | null
+          description?: string | null
+          gallery_images?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          learn_more_text?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       gallery_images: {
         Row: {
           created_at: string
@@ -176,33 +286,45 @@ export type Database = {
           category: string
           created_at: string | null
           description: string | null
+          duty_fee: number | null
           id: number
           image: string
+          is_out_of_stock: boolean | null
           name: string
           price: number
+          shipping_cost: number | null
           sizes: string[] | null
+          tax_rate: number | null
           updated_at: string | null
         }
         Insert: {
           category: string
           created_at?: string | null
           description?: string | null
+          duty_fee?: number | null
           id?: number
           image: string
+          is_out_of_stock?: boolean | null
           name: string
           price: number
+          shipping_cost?: number | null
           sizes?: string[] | null
+          tax_rate?: number | null
           updated_at?: string | null
         }
         Update: {
           category?: string
           created_at?: string | null
           description?: string | null
+          duty_fee?: number | null
           id?: number
           image?: string
+          is_out_of_stock?: boolean | null
           name?: string
           price?: number
+          shipping_cost?: number | null
           sizes?: string[] | null
+          tax_rate?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -250,6 +372,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          product_id: number | null
           secondary_button_link: string | null
           secondary_button_text: string | null
           subtitle: string | null
@@ -265,6 +388,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          product_id?: number | null
           secondary_button_link?: string | null
           secondary_button_text?: string | null
           subtitle?: string | null
@@ -280,13 +404,22 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          product_id?: number | null
           secondary_button_link?: string | null
           secondary_button_text?: string | null
           subtitle?: string | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "promotional_banners_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       refunds: {
         Row: {
