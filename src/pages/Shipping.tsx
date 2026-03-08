@@ -5,16 +5,19 @@ import { SecondaryNavbar } from '../components/SecondaryNavbar';
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
 import { Truck, Clock, Shield, Globe } from 'lucide-react';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const Shipping = () => {
+  const { formatPrice } = useCurrency();
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       <SecondaryNavbar />
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Shipping Information</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold text-foreground mb-4">Shipping Information</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Learn about our shipping options, delivery times, and policies to ensure your order reaches you safely.
           </p>
         </div>
@@ -23,64 +26,49 @@ const Shipping = () => {
           <div>
             <h2 className="text-2xl font-semibold mb-6">Shipping Options</h2>
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-card p-6 rounded-lg shadow-md border border-border">
                 <div className="flex items-center mb-3">
-                  <Truck className="text-purple-600 mr-3" size={24} />
+                  <Truck className="text-primary mr-3" size={24} />
                   <h3 className="text-xl font-semibold">Standard Shipping</h3>
                 </div>
-                <p className="text-gray-600 mb-2">5-7 business days</p>
-                <p className="font-semibold text-lg">Free on orders over $75</p>
-                <p className="text-sm text-gray-500">$5.99 for orders under $75</p>
+                <p className="text-muted-foreground mb-2">5-7 business days</p>
+                <p className="font-semibold text-lg">Free on orders over {formatPrice(75)}</p>
+                <p className="text-sm text-muted-foreground">{formatPrice(5.99)} for orders under {formatPrice(75)}</p>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-card p-6 rounded-lg shadow-md border border-border">
                 <div className="flex items-center mb-3">
-                  <Clock className="text-purple-600 mr-3" size={24} />
+                  <Clock className="text-primary mr-3" size={24} />
                   <h3 className="text-xl font-semibold">Express Shipping</h3>
                 </div>
-                <p className="text-gray-600 mb-2">2-3 business days</p>
-                <p className="font-semibold text-lg">$12.99</p>
+                <p className="text-muted-foreground mb-2">2-3 business days</p>
+                <p className="font-semibold text-lg">{formatPrice(12.99)}</p>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-card p-6 rounded-lg shadow-md border border-border">
                 <div className="flex items-center mb-3">
-                  <Shield className="text-purple-600 mr-3" size={24} />
+                  <Shield className="text-primary mr-3" size={24} />
                   <h3 className="text-xl font-semibold">Overnight Shipping</h3>
                 </div>
-                <p className="text-gray-600 mb-2">Next business day</p>
-                <p className="font-semibold text-lg">$24.99</p>
+                <p className="text-muted-foreground mb-2">Next business day</p>
+                <p className="font-semibold text-lg">{formatPrice(24.99)}</p>
               </div>
             </div>
           </div>
 
           <div>
             <h2 className="text-2xl font-semibold mb-6">Delivery Areas</h2>
-            <div className="bg-gray-50 p-6 rounded-lg">
+            <div className="bg-muted p-6 rounded-lg">
               <div className="flex items-center mb-4">
-                <Globe className="text-purple-600 mr-3" size={24} />
+                <Globe className="text-primary mr-3" size={24} />
                 <h3 className="text-xl font-semibold">Available Locations</h3>
               </div>
               <div className="space-y-3">
-                <div>
-                  <h4 className="font-semibold text-gray-900">United States</h4>
-                  <p className="text-gray-600">All 50 states and territories</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Canada</h4>
-                  <p className="text-gray-600">All provinces and territories</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">United Kingdom</h4>
-                  <p className="text-gray-600">England, Scotland, Wales, Northern Ireland</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">European Union</h4>
-                  <p className="text-gray-600">All EU member countries</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Australia</h4>
-                  <p className="text-gray-600">All states and territories</p>
-                </div>
+                <div><h4 className="font-semibold text-foreground">United States</h4><p className="text-muted-foreground">All 50 states and territories</p></div>
+                <div><h4 className="font-semibold text-foreground">Canada</h4><p className="text-muted-foreground">All provinces and territories</p></div>
+                <div><h4 className="font-semibold text-foreground">United Kingdom</h4><p className="text-muted-foreground">England, Scotland, Wales, Northern Ireland</p></div>
+                <div><h4 className="font-semibold text-foreground">European Union</h4><p className="text-muted-foreground">All EU member countries</p></div>
+                <div><h4 className="font-semibold text-foreground">Australia</h4><p className="text-muted-foreground">All states and territories</p></div>
               </div>
             </div>
           </div>
@@ -95,33 +83,13 @@ const Shipping = () => {
           </p>
         </div>
 
-        <div className="bg-gray-50 p-8 rounded-lg">
+        <div className="bg-muted p-8 rounded-lg">
           <h3 className="text-2xl font-semibold mb-6">Shipping Policies</h3>
           <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold mb-2">Processing Time</h4>
-              <p className="text-gray-600 mb-4">
-                Orders are processed within 1-2 business days. Orders placed on weekends or holidays will be processed the next business day.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Tracking</h4>
-              <p className="text-gray-600 mb-4">
-                You'll receive a tracking number via email once your order ships. Track your package through our website or the carrier's site.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Damaged Items</h4>
-              <p className="text-gray-600 mb-4">
-                If your item arrives damaged, please contact us within 48 hours of delivery for a replacement or refund.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Address Changes</h4>
-              <p className="text-gray-600 mb-4">
-                Address changes can only be made before the order ships. Contact customer service immediately if needed.
-              </p>
-            </div>
+            <div><h4 className="font-semibold mb-2">Processing Time</h4><p className="text-muted-foreground mb-4">Orders are processed within 1-2 business days. Orders placed on weekends or holidays will be processed the next business day.</p></div>
+            <div><h4 className="font-semibold mb-2">Tracking</h4><p className="text-muted-foreground mb-4">You'll receive a tracking number via email once your order ships. Track your package through our website or the carrier's site.</p></div>
+            <div><h4 className="font-semibold mb-2">Damaged Items</h4><p className="text-muted-foreground mb-4">If your item arrives damaged, please contact us within 48 hours of delivery for a replacement or refund.</p></div>
+            <div><h4 className="font-semibold mb-2">Address Changes</h4><p className="text-muted-foreground mb-4">Address changes can only be made before the order ships. Contact customer service immediately if needed.</p></div>
           </div>
         </div>
       </div>

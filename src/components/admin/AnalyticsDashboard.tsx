@@ -40,7 +40,6 @@ const AnalyticsDashboard = () => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Date range filter
   const [dateFrom, setDateFrom] = useState<Date | undefined>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
@@ -70,6 +69,45 @@ const AnalyticsDashboard = () => {
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
+
+  // Real-time subscriptions for orders and refunds
+  useEffect(() => {
+    const ordersChannel = supabase
+      .channel('analytics-orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        const from = dateFrom?.toISOString();
+        const to = dateTo ? new Date(dateTo.getTime() + 86400000).toISOString() : undefined;
+        fetchSalesData(from, to);
+        fetchOrders(from, to);
+        fetchChartData(from, to);
+      })
+      .subscribe();
+
+    const refundsChannel = supabase
+      .channel('analytics-refunds')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'refunds' }, () => {
+        const from = dateFrom?.toISOString();
+        const to = dateTo ? new Date(dateTo.getTime() + 86400000).toISOString() : undefined;
+        fetchRefunds(from, to);
+        fetchChartData(from, to);
+      })
+      .subscribe();
+
+    const visitsChannel = supabase
+      .channel('analytics-visits')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'site_visits' }, () => {
+        const from = dateFrom?.toISOString();
+        const to = dateTo ? new Date(dateTo.getTime() + 86400000).toISOString() : undefined;
+        fetchVisits(from, to);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(refundsChannel);
+      supabase.removeChannel(visitsChannel);
+    };
+  }, [dateFrom, dateTo]);
 
   const fetchSalesData = async (from?: string, to?: string) => {
     let query = supabase.from('orders').select('total');
@@ -154,17 +192,12 @@ const AnalyticsDashboard = () => {
     setChartData(chart);
   };
 
-  // CSV Export
   const exportOrdersCSV = () => {
     if (!orders.length) return;
     const headers = ['Customer', 'Email', 'Amount', 'Payment Method', 'Country', 'Status', 'Date'];
     const rows = orders.map((o) => [
-      o.customer_name || 'N/A',
-      o.customer_email || 'N/A',
-      Number(o.total).toFixed(2),
-      o.payment_method || 'N/A',
-      o.country || 'N/A',
-      o.status || 'pending',
+      o.customer_name || 'N/A', o.customer_email || 'N/A', Number(o.total).toFixed(2),
+      o.payment_method || 'N/A', o.country || 'N/A', o.status || 'pending',
       o.created_at ? new Date(o.created_at).toLocaleDateString() : 'N/A',
     ]);
     downloadCSV([headers, ...rows], 'orders-export.csv');
@@ -188,6 +221,8 @@ const AnalyticsDashboard = () => {
     URL.revokeObjectURL(url);
   };
 
+  const netProfit = totalSales - totalRefunds;
+
   const chartConfig = {
     sales: { label: 'Sales', color: '#22c55e' },
     refunds: { label: 'Refunds', color: '#ef4444' },
@@ -201,9 +236,8 @@ const AnalyticsDashboard = () => {
   return (
     <div className="space-y-6 mb-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">📊 Analytics Dashboard</h2>
+        <h2 className="text-2xl font-bold text-foreground">📊 Analytics Dashboard <span className="text-xs font-normal text-green-600 ml-2">● Live</span></h2>
 
-        {/* Date Range Filter */}
         <div className="flex flex-wrap items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
@@ -216,9 +250,7 @@ const AnalyticsDashboard = () => {
               <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className={cn("p-3 pointer-events-auto")} />
             </PopoverContent>
           </Popover>
-
-          <span className="text-sm text-gray-500">to</span>
-
+          <span className="text-sm text-muted-foreground">to</span>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn("w-[150px] justify-start text-left text-sm", !dateTo && "text-muted-foreground")}>
@@ -234,11 +266,11 @@ const AnalyticsDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Sales</p>
+              <p className="text-sm text-muted-foreground">Total Sales</p>
               <p className="text-2xl font-bold text-green-600">${totalSales.toFixed(2)}</p>
             </div>
             <DollarSign className="text-green-600" size={32} />
@@ -247,7 +279,7 @@ const AnalyticsDashboard = () => {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Website Visits</p>
+              <p className="text-sm text-muted-foreground">Website Visits</p>
               <p className="text-2xl font-bold text-blue-600">{totalVisits.toLocaleString()}</p>
             </div>
             <Eye className="text-blue-600" size={32} />
@@ -256,7 +288,7 @@ const AnalyticsDashboard = () => {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Refunds</p>
+              <p className="text-sm text-muted-foreground">Total Refunds</p>
               <p className="text-2xl font-bold text-red-600">${totalRefunds.toFixed(2)}</p>
             </div>
             <RotateCcw className="text-red-600" size={32} />
@@ -265,7 +297,16 @@ const AnalyticsDashboard = () => {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Active Products ({activeProducts})</p>
+              <p className="text-sm text-muted-foreground">Net Profit</p>
+              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>${netProfit.toFixed(2)}</p>
+            </div>
+            <TrendingUp className={netProfit >= 0 ? 'text-green-600' : 'text-red-600'} size={32} />
+          </div>
+        </Card>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Products ({activeProducts})</p>
               <p className="text-2xl font-bold text-purple-600">${totalProductValue.toFixed(2)}</p>
             </div>
             <Package className="text-purple-600" size={32} />
@@ -273,7 +314,7 @@ const AnalyticsDashboard = () => {
         </Card>
       </div>
 
-      {/* Profit/Loss Chart */}
+      {/* Chart */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -296,14 +337,14 @@ const AnalyticsDashboard = () => {
             </LineChart>
           </ChartContainer>
         ) : (
-          <p className="text-gray-500 text-center py-8">No data available for the selected date range.</p>
+          <p className="text-muted-foreground text-center py-8">No data available for the selected date range.</p>
         )}
       </Card>
 
       {/* Orders Table */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">🛒 Recent Orders</h3>
+          <h3 className="text-lg font-semibold">🛒 Recent Orders <span className="text-xs font-normal text-green-600 ml-1">● Live</span></h3>
           <Button variant="outline" size="sm" onClick={exportOrdersCSV} disabled={!orders.length}>
             <Download className="mr-1 h-4 w-4" /> Export Orders CSV
           </Button>
@@ -329,7 +370,7 @@ const AnalyticsDashboard = () => {
                     <TableCell>{order.customer_email || 'N/A'}</TableCell>
                     <TableCell className="font-semibold">${Number(order.total).toFixed(2)}</TableCell>
                     <TableCell>
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs capitalize">
+                      <span className="px-2 py-1 bg-muted rounded text-xs capitalize">
                         {order.payment_method?.replace('-', ' ') || 'N/A'}
                       </span>
                     </TableCell>
@@ -338,12 +379,12 @@ const AnalyticsDashboard = () => {
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         order.status === 'completed' ? 'bg-green-100 text-green-700' :
                         order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-700'
+                        'bg-muted text-muted-foreground'
                       }`}>
                         {order.status || 'pending'}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="text-sm text-muted-foreground">
                       {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
                     </TableCell>
                   </TableRow>
@@ -352,7 +393,7 @@ const AnalyticsDashboard = () => {
             </Table>
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No orders for the selected date range.</p>
+          <p className="text-muted-foreground text-center py-4">No orders for the selected date range.</p>
         )}
       </Card>
     </div>
