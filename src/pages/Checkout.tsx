@@ -136,7 +136,7 @@ const Checkout = () => {
   const handlePaystackPayment = async (code: string) => {
     setIsProcessing(true);
     try {
-      const orderId = await saveOrder(code, 'paystack-card');
+      const orderId = await saveOrder(code, 'paystack-card', true);
       if (!orderId) {
         toast({ title: 'Error', description: 'Failed to create order', variant: 'destructive' });
         setIsProcessing(false);
