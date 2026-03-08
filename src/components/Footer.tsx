@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Instagram, Facebook, Twitter, Mail } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const Footer = () => {
   return (
@@ -9,22 +10,18 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <h3 className="text-2xl font-bold">LUXE</h3>
+            <h3 className="text-2xl font-bold">AURA</h3>
             <p className="text-gray-400">
               Elevating style with premium fashion pieces for the modern lifestyle.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Instagram size={20} />
+            <div className="space-y-2 text-gray-400">
+              <a href="mailto:auraclothing@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
+                <Mail size={16} />
+                auraclothing@gmail.com
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Facebook size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Mail size={20} />
+              <a href="tel:0783720685" className="flex items-center gap-2 hover:text-white transition-colors">
+                <Phone size={16} />
+                0783720685
               </a>
             </div>
           </div>
@@ -33,10 +30,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Shop</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white transition-colors">Women</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Men</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Accessories</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Sale</a></li>
+              <li><Link to="/women" className="hover:text-white transition-colors">Women</Link></li>
+              <li><Link to="/men" className="hover:text-white transition-colors">Men</Link></li>
+              <li><Link to="/accessories" className="hover:text-white transition-colors">Accessories</Link></li>
+              <li><Link to="/sale" className="hover:text-white transition-colors">Sale</Link></li>
             </ul>
           </div>
           
@@ -44,10 +41,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Customer Service</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Size Guide</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Shipping & Returns</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+              <li><Link to="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
+              <li><Link to="/help" className="hover:text-white transition-colors">Help & FAQ</Link></li>
+              <li><Link to="/shipping" className="hover:text-white transition-colors">Shipping & Returns</Link></li>
+              <li><Link to="/customer-service" className="hover:text-white transition-colors">Customer Service</Link></li>
             </ul>
           </div>
           
@@ -69,7 +66,7 @@ export const Footer = () => {
         </div>
         
         <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 LUXE. All rights reserved.</p>
+          <p>&copy; 2024 AURA Clothing. All rights reserved.</p>
         </div>
       </div>
     </footer>

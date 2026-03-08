@@ -4,7 +4,7 @@ import { Header } from '../components/Header';
 import { SecondaryNavbar } from '../components/SecondaryNavbar';
 import { Cart } from '../components/Cart';
 import { Footer } from '../components/Footer';
-import { Phone, Mail, Clock, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Phone, Mail, Clock, MessageCircle, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -43,7 +43,9 @@ const CustomerService = () => {
               <h3 className="text-xl font-semibold">Phone Support</h3>
             </div>
             <p className="text-gray-600 mb-4">Speak directly with our customer service team</p>
-            <p className="font-semibold text-lg">+1 (555) 123-4567</p>
+            <a href="tel:0783720685" className="font-semibold text-lg text-purple-600 hover:underline">
+              0783720685
+            </a>
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md border">
@@ -52,18 +54,26 @@ const CustomerService = () => {
               <h3 className="text-xl font-semibold">Email Support</h3>
             </div>
             <p className="text-gray-600 mb-4">Send us your questions and we'll respond within 24 hours</p>
-            <p className="font-semibold">support@luxe.com</p>
+            <a href="mailto:auraclothing@gmail.com" className="font-semibold text-purple-600 hover:underline">
+              auraclothing@gmail.com
+            </a>
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md border">
             <div className="flex items-center mb-4">
-              <MessageCircle className="text-purple-600 mr-3" size={24} />
-              <h3 className="text-xl font-semibold">Live Chat</h3>
+              <MessageCircle className="text-gray-400 mr-3" size={24} />
+              <h3 className="text-xl font-semibold text-gray-500">Live Chat</h3>
             </div>
-            <p className="text-gray-600 mb-4">Chat with us instantly for quick assistance</p>
-            <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-              Start Chat
-            </button>
+            <div className="flex items-center gap-2 mb-4">
+              <AlertCircle className="text-amber-500" size={16} />
+              <p className="text-amber-600 text-sm font-medium">Currently Unavailable</p>
+            </div>
+            <p className="text-gray-500 text-sm">
+              Live chat is temporarily unavailable. Please contact us via email at{' '}
+              <a href="mailto:auraclothing@gmail.com" className="text-purple-600 hover:underline">
+                auraclothing@gmail.com
+              </a>
+            </p>
           </div>
         </div>
 

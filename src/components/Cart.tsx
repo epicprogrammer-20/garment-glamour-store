@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { X, Plus, Minus } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { LocationPopup } from './LocationPopup';
 
 export const Cart = () => {
   const { state, dispatch } = useCart();
+  const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const location = useLocation();
   const [showLocationPopup, setShowLocationPopup] = useState(false);
@@ -71,7 +73,7 @@ export const Cart = () => {
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900">{item.name}</h3>
                         <p className="text-sm text-blue-600">Size: {item.size}</p>
-                        <p className="font-semibold text-gray-900">${item.price}</p>
+                        <p className="font-semibold text-gray-900">{formatPrice(item.price)}</p>
                       </div>
                       <div className="flex items-center space-x-2">
                         <button 
@@ -100,7 +102,7 @@ export const Cart = () => {
                 
                 <div className="mt-6 pt-6 border-t border-blue-100">
                   <div className="flex justify-between text-lg font-semibold mb-4">
-                    <span>Total: ${total.toFixed(2)}</span>
+                    <span>Total: {formatPrice(total)}</span>
                   </div>
                   <button
                     onClick={handleCheckout}
