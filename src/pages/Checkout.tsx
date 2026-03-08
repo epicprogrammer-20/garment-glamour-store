@@ -28,6 +28,14 @@ const Checkout = () => {
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
   const { user, loading: authLoading } = useAuth();
+  
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [productFees, setProductFees] = useState<Record<number, ProductFees>>({});
+  const [formData, setFormData] = useState({
+    fullName: '', email: '', phone: '',
+    address: locationData?.location || '', city: locationData?.city || '', state: '', zipCode: '', country: locationData?.country || '',
+    paymentMethod: 'credit-card', cardNumber: '', expiryDate: '', cvv: '', cardName: '', ecocashNumber: '', innbucksNumber: ''
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -43,14 +51,6 @@ const Checkout = () => {
   if (!user) {
     return null;
   }
-  
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [productFees, setProductFees] = useState<Record<number, ProductFees>>({});
-  const [formData, setFormData] = useState({
-    fullName: '', email: '', phone: '',
-    address: locationData?.location || '', city: locationData?.city || '', state: '', zipCode: '', country: locationData?.country || '',
-    paymentMethod: 'credit-card', cardNumber: '', expiryDate: '', cvv: '', cardName: '', ecocashNumber: '', innbucksNumber: ''
-  });
 
   useEffect(() => {
     const fetchFees = async () => {
