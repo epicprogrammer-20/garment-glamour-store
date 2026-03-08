@@ -167,7 +167,7 @@ const OrderStatusManager = () => {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">No orders found.</TableCell>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No orders found.</TableCell>
                 </TableRow>
               )}
             </TableBody>

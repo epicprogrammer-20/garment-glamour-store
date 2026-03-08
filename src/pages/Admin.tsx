@@ -129,6 +129,7 @@ const Admin = () => {
 
           <TabsContent value="orders" className="space-y-6">
             <OrderStatusManager />
+            <RefundManager />
             <OrdersHistory />
           </TabsContent>
 
