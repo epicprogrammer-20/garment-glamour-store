@@ -23,9 +23,26 @@ interface ProductFees {
 const Checkout = () => {
   const { state, dispatch } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
   const locationData = location.state?.locationData;
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast({ title: "Login Required", description: "Please create an account or log in to proceed to checkout.", variant: "destructive" });
+      navigate('/profile');
+    }
+  }, [user, authLoading, navigate, toast]);
+
+  if (authLoading) {
+    return <div className="min-h-screen bg-background"><Header /><div className="flex items-center justify-center min-h-[60vh]"><div>Loading...</div></div><Footer /></div>;
+  }
+
+  if (!user) {
+    return null;
+  }
   
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [productFees, setProductFees] = useState<Record<number, ProductFees>>({});

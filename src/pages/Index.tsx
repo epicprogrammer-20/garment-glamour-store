@@ -17,7 +17,7 @@ const Index = () => {
   useVisitTracker();
   return (
     <div className="min-h-screen bg-background">
-      <SecondaryNavbar />
+      
       <Header />
       <PromoBanner />
       <EventBanner />
