@@ -79,12 +79,23 @@ const Checkout = () => {
     window.open(`https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
+  const [trackingCode, setTrackingCode] = useState('');
+
+  const generateTrackingCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const code = generateTrackingCode();
     try {
       const { data: orderData, error: orderError } = await supabase.from('orders').insert({
         total: grandTotal, payment_method: formData.paymentMethod, country: formData.country,
-        customer_email: formData.email, customer_name: formData.fullName, status: 'pending',
+        customer_email: formData.email, customer_name: formData.fullName, status: 'placed',
+        tracking_code: code,
       }).select('id').single();
 
       if (orderData && !orderError) {
@@ -98,6 +109,7 @@ const Checkout = () => {
           price: item.price,
         }));
         await supabase.from('order_items').insert(items);
+        setTrackingCode(code);
       }
     } catch (err) { console.error('Failed to save order:', err); }
     setShowConfirmation(true);
