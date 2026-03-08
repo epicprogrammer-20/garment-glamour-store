@@ -26,6 +26,7 @@ import Shipping from "./pages/Shipping";
 import CustomerService from "./pages/CustomerService";
 import DeliveryRestriction from "./pages/DeliveryRestriction";
 import EventPage from "./pages/EventPage";
+import TrackOrder from "./pages/TrackOrder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
