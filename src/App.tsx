@@ -27,6 +27,7 @@ import CustomerService from "./pages/CustomerService";
 import DeliveryRestriction from "./pages/DeliveryRestriction";
 import EventPage from "./pages/EventPage";
 import TrackOrder from "./pages/TrackOrder";
+import Refund from "./pages/Refund";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
