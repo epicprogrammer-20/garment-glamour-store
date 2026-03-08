@@ -38,8 +38,10 @@ serve(async (req) => {
       });
     }
 
-    // Update order status if order_id is in metadata
+    // Update order status and fetch tracking code if order_id is in metadata
     const orderId = data.data.metadata?.order_id;
+    const trackingCode = data.data.metadata?.tracking_code;
+    
     if (orderId) {
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL')!,
@@ -57,6 +59,7 @@ serve(async (req) => {
       amount: data.data.amount / 100,
       reference: data.data.reference,
       order_id: orderId,
+      tracking_code: trackingCode,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
