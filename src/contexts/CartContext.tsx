@@ -22,7 +22,7 @@ interface CartState {
 }
 
 type CartAction = 
-  | { type: 'ADD_ITEM'; payload: Product & { size: string } }
+  | { type: 'ADD_ITEM'; payload: Product & { size: string; quantity?: number } }
   | { type: 'REMOVE_FROM_CART'; payload: { id: number; size: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { id: number; size: string; quantity: number } }
   | { type: 'TOGGLE_CART' }
@@ -37,17 +37,18 @@ const initialState: CartState = {
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case 'ADD_ITEM': {
+      const addQty = action.payload.quantity || 1;
       const existingItem = state.items.find(item => item.id === action.payload.id && item.size === action.payload.size);
       let newItems;
       
       if (existingItem) {
         newItems = state.items.map(item =>
           item.id === action.payload.id && item.size === action.payload.size
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + addQty }
             : item
         );
       } else {
-        newItems = [...state.items, { ...action.payload, quantity: 1 }];
+        newItems = [...state.items, { ...action.payload, quantity: addQty }];
       }
       
       const total = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
