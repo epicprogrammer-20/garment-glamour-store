@@ -50,7 +50,7 @@ const Admin = () => {
   const fetchSaleProducts = async () => { const { data } = await supabase.from('sale_products').select('*').order('created_at', { ascending: false }); if (data) setSaleProducts(data || []); };
   const fetchGalleryImages = async () => { const { data } = await supabase.from('gallery_images').select('*').order('created_at', { ascending: false }); if (data) setGalleryImages(data || []); };
 
-  const handleLogout = () => { localStorage.removeItem('adminAuthenticated'); setIsAuthenticated(false); };
+  const handleLogout = async () => { await supabase.auth.signOut(); setIsAuthenticated(false); };
 
   const deleteProduct = async (id: number) => {
     const { error } = await supabase.from('products').delete().eq('id', id);
