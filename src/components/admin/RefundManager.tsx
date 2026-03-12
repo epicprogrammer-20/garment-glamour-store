@@ -10,6 +10,21 @@ import { toast } from '@/hooks/use-toast';
 import { RefreshCw, CheckCircle2, XCircle, Clock, Eye, ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
+const RefundImage = ({ path, index }: { path: string; index: number }) => {
+  const [url, setUrl] = useState('');
+  useEffect(() => {
+    supabase.storage.from('refunds').createSignedUrl(path, 3600).then(({ data }) => {
+      if (data?.signedUrl) setUrl(data.signedUrl);
+    });
+  }, [path]);
+  if (!url) return <div className="w-full h-24 bg-muted rounded-lg animate-pulse" />;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+      <img src={url} alt={`Refund image ${index + 1}`} className="w-full h-24 object-cover rounded-lg border border-border hover:opacity-80 transition-opacity" />
+    </a>
+  );
+};
+
 interface Refund {
   id: string;
   order_id: string | null;
