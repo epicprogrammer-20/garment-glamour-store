@@ -236,15 +236,9 @@ const RefundManager = () => {
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Uploaded Photos ({selectedRefund.images.length})</p>
                   <div className="grid grid-cols-3 gap-2">
-                    {selectedRefund.images.map((path, i) => {
-                      const { data } = supabase.storage.from('refunds').createSignedUrl(path, 3600);
-                      const signedUrl = data?.signedUrl || '';
-                      return (
-                        <a key={i} href={signedUrl} target="_blank" rel="noopener noreferrer" className="block">
-                          <img src={signedUrl} alt={`Refund image ${i + 1}`} className="w-full h-24 object-cover rounded-lg border border-border hover:opacity-80 transition-opacity" />
-                        </a>
-                      );
-                    })}
+                    {selectedRefund.images.map((path, i) => (
+                      <RefundImage key={i} path={path} index={i} />
+                    ))}
                   </div>
                 </div>
               )}
