@@ -81,17 +81,16 @@ const Refund = () => {
   };
 
   const uploadImages = async (): Promise<string[]> => {
-    const urls: string[] = [];
+    const paths: string[] = [];
     for (const file of images) {
       const ext = file.name.split('.').pop();
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error } = await supabase.storage.from('refunds').upload(path, file);
       if (!error) {
-        const { data: urlData } = supabase.storage.from('refunds').getPublicUrl(path);
-        urls.push(urlData.publicUrl);
+        paths.push(path);
       }
     }
-    return urls;
+    return paths;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
