@@ -59,31 +59,26 @@ const TrackOrder = () => {
     setOrder(null);
     setItems([]);
 
-    const { data, error: err } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('tracking_code', code.trim().toUpperCase())
-      .single();
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('lookup-order', {
+        body: { tracking_code: code.trim().toUpperCase() },
+      });
 
-    if (err || !data) {
-      setError('No order found with that tracking code.');
-      setLoading(false);
-      return;
+      if (fnError || !data?.order) {
+        setError('No order found with that tracking code.');
+        setLoading(false);
+        return;
+      }
+
+      setOrder(data.order as OrderData);
+      if (data.items) setItems(data.items as OrderItem[]);
+    } catch {
+      setError('Something went wrong. Please try again.');
     }
-
-    setOrder(data as OrderData);
-
-    const { data: itemsData } = await supabase
-      .from('order_items')
-      .select('*')
-      .eq('order_id', data.id);
-
-    if (itemsData) setItems(itemsData as OrderItem[]);
     setLoading(false);
   };
 
   const currentStatus = order?.status || 'pending';
-  // Map 'pending' to 'placed' for the stepper
   const mappedStatus = currentStatus === 'pending' ? 'placed' : currentStatus;
   const activeIndex = STEPS.indexOf(mappedStatus as typeof STEPS[number]);
 
@@ -128,9 +123,7 @@ const TrackOrder = () => {
             {/* Progress Stepper */}
             <div className="py-6">
               <div className="flex items-center justify-between relative">
-                {/* Background line */}
                 <div className="absolute top-5 left-[10%] right-[10%] h-1 bg-muted rounded-full" />
-                {/* Active line */}
                 <div
                   className="absolute top-5 left-[10%] h-1 bg-green-500 rounded-full transition-all duration-500"
                   style={{ width: `${Math.max(0, activeIndex) * (80 / (STEPS.length - 1))}%` }}

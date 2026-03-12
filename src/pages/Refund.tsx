@@ -40,25 +40,29 @@ const Refund = () => {
     setError('');
     setOrder(null);
 
-    const { data, error: err } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('tracking_code', trackingCode.trim().toUpperCase())
-      .single();
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('lookup-order', {
+        body: { tracking_code: trackingCode.trim().toUpperCase() },
+      });
 
-    if (err || !data) {
-      setError('No order found with that tracking code.');
-      setLoading(false);
-      return;
+      if (fnError || !data?.order) {
+        setError('No order found with that tracking code.');
+        setLoading(false);
+        return;
+      }
+
+      const orderData = data.order;
+
+      if (orderData.status !== 'delivered') {
+        setError('Refunds can only be requested for delivered orders. Please wait until your order is delivered.');
+        setLoading(false);
+        return;
+      }
+
+      setOrder(orderData);
+    } catch {
+      setError('Something went wrong. Please try again.');
     }
-
-    if (data.status !== 'delivered') {
-      setError('Refunds can only be requested for delivered orders. Please wait until your order is delivered.');
-      setLoading(false);
-      return;
-    }
-
-    setOrder(data);
     setLoading(false);
   };
 
@@ -122,7 +126,7 @@ const Refund = () => {
     });
 
     if (err) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to submit refund request. Please try again.', variant: 'destructive' });
     } else {
       setSubmitted(true);
       toast({ title: 'Refund request submitted successfully' });
