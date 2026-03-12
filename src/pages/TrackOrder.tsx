@@ -13,10 +13,7 @@ interface OrderData {
   tracking_code: string;
   status: string | null;
   created_at: string | null;
-  customer_name: string | null;
   total: number;
-  payment_method: string | null;
-  country: string | null;
   estimated_delivery: string | null;
 }
 
