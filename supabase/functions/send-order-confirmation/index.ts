@@ -6,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const esc = (s: string) =>
+  String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -34,17 +37,15 @@ serve(async (req) => {
       });
     }
 
-    // Verify the user is sending their own order confirmation OR is an admin
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-
     const { email, customerName, trackingCode, items, total, paymentMethod } = await req.json();
 
     // Check if user is admin or if the email matches their own
     const isOwnEmail = user.email === email;
     if (!isOwnEmail) {
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
       const { data: roleData } = await supabaseAdmin
         .from('user_roles')
         .select('role')
@@ -72,18 +73,21 @@ serve(async (req) => {
       });
     }
 
+    const safeName = esc(customerName);
+    const safeCode = esc(trackingCode);
+
     const itemsHtml = (items || []).map((item: any) => `
       <tr>
         <td style="padding: 12px; border-bottom: 1px solid #eee;">
           <div style="display: flex; align-items: center; gap: 12px;">
-            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" />` : ''}
+            ${item.image ? `<img src="${esc(item.image)}" alt="${esc(item.name)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" />` : ''}
             <div>
-              <p style="margin: 0; font-weight: 600; color: #111;">${item.name}</p>
-              <p style="margin: 2px 0 0; color: #888; font-size: 13px;">Size: ${item.size || 'N/A'} · Qty: ${item.quantity}</p>
+              <p style="margin: 0; font-weight: 600; color: #111;">${esc(item.name)}</p>
+              <p style="margin: 2px 0 0; color: #888; font-size: 13px;">Size: ${esc(item.size || 'N/A')} · Qty: ${Number(item.quantity)}</p>
             </div>
           </div>
         </td>
-        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600; color: #111;">$${(item.price * item.quantity).toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600; color: #111;">$${(Number(item.price) * Number(item.quantity)).toFixed(2)}</td>
       </tr>
     `).join('');
 
@@ -96,19 +100,19 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'AURA Clothing <onboarding@resend.dev>',
         to: [email],
-        subject: `✅ Order Confirmed — ${trackingCode}`,
+        subject: `✅ Order Confirmed — ${safeCode}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; padding: 40px;">
             <div style="text-align: center; margin-bottom: 30px;">
               <h1 style="font-size: 28px; font-weight: bold; color: #111;">AURA</h1>
             </div>
-            <h2 style="color: #111; font-size: 22px;">Hi ${customerName},</h2>
+            <h2 style="color: #111; font-size: 22px;">Hi ${safeName},</h2>
             <p style="color: #555; font-size: 16px; line-height: 1.6;">
               Thank you for your order! We've received it and will begin processing it shortly.
             </p>
             <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
               <p style="color: #888; font-size: 12px; margin: 0 0 4px;">TRACKING CODE</p>
-              <p style="color: #111; font-size: 28px; font-weight: bold; font-family: monospace; margin: 0; letter-spacing: 4px;">${trackingCode}</p>
+              <p style="color: #111; font-size: 28px; font-weight: bold; font-family: monospace; margin: 0; letter-spacing: 4px;">${safeCode}</p>
             </div>
             <h3 style="color: #111; font-size: 16px; margin-top: 28px;">Order Details</h3>
             <table style="width: 100%; border-collapse: collapse; margin: 12px 0;">
@@ -123,7 +127,7 @@ serve(async (req) => {
               </tbody>
             </table>
             <div style="text-align: right; margin-top: 16px; padding-top: 16px; border-top: 2px solid #111;">
-              <p style="font-size: 12px; color: #888; margin: 0;">Payment: ${paymentMethod || 'Card'}</p>
+              <p style="font-size: 12px; color: #888; margin: 0;">Payment: ${esc(paymentMethod || 'Card')}</p>
               <p style="font-size: 20px; font-weight: bold; color: #111; margin: 4px 0 0;">Total: $${Number(total).toFixed(2)}</p>
             </div>
             <div style="text-align: center; margin: 30px 0;">

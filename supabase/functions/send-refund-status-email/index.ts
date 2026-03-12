@@ -6,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const esc = (s: string) =>
+  String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -65,20 +68,24 @@ serve(async (req) => {
       });
     }
 
+    const safeName = esc(customerName || 'Customer');
+    const safeCode = esc(trackingCode);
+    const safeAmount = Number(amount).toFixed(2);
+
     const isApproved = status === 'approved';
     const subject = isApproved
-      ? `✅ Refund Approved — ${trackingCode}`
-      : `❌ Refund Request Update — ${trackingCode}`;
+      ? `✅ Refund Approved — ${safeCode}`
+      : `❌ Refund Request Update — ${safeCode}`;
 
     const statusMessage = isApproved
       ? `<p style="color: #555; font-size: 16px; line-height: 1.6;">
-          Your refund request for order <strong style="font-family: monospace;">${trackingCode}</strong> has been <span style="color: #16a34a; font-weight: bold;">approved</span>.
+          Your refund request for order <strong style="font-family: monospace;">${safeCode}</strong> has been <span style="color: #16a34a; font-weight: bold;">approved</span>.
         </p>
         <p style="color: #555; font-size: 16px; line-height: 1.6;">
-          A refund of <strong>$${Number(amount).toFixed(2)}</strong> will be processed within <strong>6 hours</strong>.
+          A refund of <strong>$${safeAmount}</strong> will be processed within <strong>6 hours</strong>.
         </p>`
       : `<p style="color: #555; font-size: 16px; line-height: 1.6;">
-          Your refund request for order <strong style="font-family: monospace;">${trackingCode}</strong> has been <span style="color: #dc2626; font-weight: bold;">declined</span>.
+          Your refund request for order <strong style="font-family: monospace;">${safeCode}</strong> has been <span style="color: #dc2626; font-weight: bold;">declined</span>.
         </p>
         <p style="color: #555; font-size: 16px; line-height: 1.6;">
           If you believe this is an error, please contact our support team for further assistance.
@@ -99,12 +106,12 @@ serve(async (req) => {
             <div style="text-align: center; margin-bottom: 30px;">
               <h1 style="font-size: 28px; font-weight: bold; color: #111;">AURA</h1>
             </div>
-            <h2 style="color: #111; font-size: 22px;">Hi ${customerName || 'Customer'},</h2>
+            <h2 style="color: #111; font-size: 22px;">Hi ${safeName},</h2>
             ${statusMessage}
             <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
               <p style="color: #888; font-size: 12px; margin: 0 0 4px;">ORDER</p>
-              <p style="color: #111; font-size: 24px; font-weight: bold; font-family: monospace; margin: 0;">${trackingCode}</p>
-              <p style="color: #888; font-size: 14px; margin: 8px 0 0;">Amount: $${Number(amount).toFixed(2)}</p>
+              <p style="color: #111; font-size: 24px; font-weight: bold; font-family: monospace; margin: 0;">${safeCode}</p>
+              <p style="color: #888; font-size: 14px; margin: 8px 0 0;">Amount: $${safeAmount}</p>
             </div>
             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
             <p style="color: #aaa; font-size: 12px; text-align: center;">
