@@ -35,7 +35,7 @@ export const Hero = () => {
           </div>
           
           <div className="relative">
-            <div className="bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+            <div className="bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-300 bg-[#1974eb]">
               <div className="bg-white rounded-lg p-6 text-black">
                 <h3 className="text-2xl font-bold mb-2">Featured Collection</h3>
                 <p className="text-gray-600 mb-4">Spring/Summer 2024</p>
@@ -50,6 +50,6 @@ export const Hero = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
